@@ -52,7 +52,7 @@
   }
   function start(){
   if(!ready)return;
-  entered=true;display(false);setNightMode(true);
+  entered=true;display(false);setMode(true);
   bike.speed=0;bike.lookOffset=0;bike.coord=[2.33749,48.85834];bike.heading=-32;
   bike.active=false;
   map.resize();
@@ -65,7 +65,7 @@
   function overview(){
   if(!ready)return;
   bike.active=false;bike.speed=0;
-  entered=true;display(false);setNightMode(false);
+  entered=true;display(false);setMode(false);
   map.flyTo({center:[2.339,48.864],zoom:12.6,pitch:63,bearing:-25,duration:reduced?0:2600,essential:true});
   setPlace('PARIS · CITY OVERVIEW');
   $('#wayfinder-title').textContent='Paris, all lit up.';
@@ -77,7 +77,7 @@
   const s=stories[i];if(!s)return;
   if(!entered){entered=true;display(false);}
   bike.active=false;bike.speed=0;bike.coord=[...s.coords];bike.heading=[-30,22,-18,38,-28,32,-45,35][i];
-  setNightMode(true);
+  setMode(true);
   map.once('moveend',()=>{if(!walking||!entered)return;bike.active=true;applyBikeCamera();near();});
   map.flyTo({center:s.coords,zoom:18.0,pitch:78,bearing:bike.heading,duration:reduced?0:2300,essential:true,curve:1.5});
   setPlace(s.place.toUpperCase()+' · PARIS');
