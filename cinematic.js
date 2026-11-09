@@ -1,13 +1,13 @@
 (() => {
     const photos = [
       {
-        url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Sunset_%40_Seine_%40_Pont_des_Arts_%40_Paris_%2833017547140%29.jpg/1920px-Sunset_%40_Seine_%40_Pont_des_Arts_%40_Paris_%2833017547140%29.jpg",
+        url: "https://commons.wikimedia.org/wiki/Special:FilePath/Sunset_%40_Seine_%40_Pont_des_Arts_%40_Paris_%2833017547140%29.jpg?width=1920",
         credit: "Guilhem Vellut · CC BY 2.0",
         source: "https://commons.wikimedia.org/wiki/File:Sunset_@_Seine_@_Pont_des_Arts_@_Paris_(33017547140).jpg",
         license: "https://creativecommons.org/licenses/by/2.0/"
       },
       {
-        url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Paris_-_Seine_%287%29.jpg/1920px-Paris_-_Seine_%287%29.jpg",
+        url: "https://commons.wikimedia.org/wiki/Special:FilePath/Paris_-_Seine_(7).jpg?width=1920",
         credit: "Johannes Reimer · CC BY 4.0",
         source: "https://commons.wikimedia.org/wiki/File:Paris_-_Seine_(7).jpg",
         license: "https://creativecommons.org/licenses/by/4.0/"
