@@ -9,13 +9,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@6.9.0/dist/maplibre-gl.css"/>
   <link rel="stylesheet" href="./city.css"/>
-  <script type="importmap">{"imports":{"maplibre-gl":"https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.mjs"}}</script>
+  <script type="importmap">{"imports":{"maplibre-gl":"https://cdn.jsdelivr.net/npm/maplibre-gl@6.9.0/dist/maplibre-gl.mjs"}}</script>
 </head>
 <body>
   <div id="app">
     <div id="map" aria-label="Interactive 3D map of Paris"></div>
+    <a id="maptoolkit-attribution" href="https://www.maptoolkit.org/" target="_blank" rel="noopener noreferrer" aria-label="Maptoolkit mapping data attribution"><img src="https://www.maptoolkit.org/assets/maptoolkit-attribution.png" alt="Maptoolkit"/></a>
     <div class="scene-shading" aria-hidden="true"></div>
     <div class="subtle-grain" aria-hidden="true"></div>
     <div class="loading" id="loading"><div class="loader-logo">PAJ<span>.</span></div><div class="loading-track"><i></i></div><p>BUILDING PARIS, ONE STREET AT A TIME</p></div>
