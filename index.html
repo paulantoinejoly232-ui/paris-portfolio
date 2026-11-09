@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a262e" />
+  <meta name="description" content="A cinematic walk along the Seine. Explore Paul-Antoine Joly's projects and experiences through an interactive Paris portfolio." />
+  <title>A Walk Through Paris — Paul-Antoine Joly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main id="app" aria-label="Interactive 3D personal portfolio">
+    <div id="scene" aria-hidden="true"></div>
+    <div id="poster" aria-hidden="true">
+      <div class="poster-sun"></div><div class="poster-skyline skyline-back"></div><div class="poster-skyline skyline-front"></div>
+      <div class="poster-river"></div>
+    </div>
+    <div id="loading"><div class="loading-mark">P<span>·</span>A<span>·</span>J</div><div class="loading-line"><i></i></div><p>Preparing your Parisian stroll…</p></div>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Paul-Antoine Joly home">PA<span>J</span><small>PARIS, AT GOLDEN HOUR</small></a>
+      <nav aria-label="Main navigation"><button id="nav-explore">THE WALK</button><button id="nav-work">THE GALLERY</button><button id="nav-about">ABOUT</button><button id="nav-contact" class="nav-contact">SAY BONJOUR <span>↗</span></button></nav>
+    </header>
+    <section class="intro" id="intro">
+      <div class="eyebrow"><span class="eyebrow-line"></span> AN INTERACTIVE PORTFOLIO EXPERIENCE <span>•</span> PARIS, 19:42</div>
+      <h1>Take a little<br/><em>walk with me.</em></h1>
+      <p>Along the Seine, every art stand has a story.<br/>Some are about things I've built. Others, places I've been.<br/>All of them are a piece of who I am.</p>
+      <button id="begin" class="primary-action"><span>BEGIN THE WALK</span><span class="action-circle">↗</span></button>
+      <div class="intro-sub">NO RUSH. THE SUN ISN'T GOING ANYWHERE. &nbsp; ✦</div>
+    </section>
+    <div id="hud" class="hud hidden">
+      <div class="location"><span class="live-dot"></span> QUAI DE SEINE <small>48°51′ N · 2°21′ E</small></div>
+      <div class="progress"><span>YOUR WALK</span><div class="progress-track"><i id="progress-bar"></i></div><span id="progress-value">0%</span></div>
+      <div class="compass"><span id="compass-direction">N</span><small>PARIS</small></div>
+    </div>
+    <div id="crosshair" class="crosshair hidden"><i></i><i></i></div>
+    <div id="proximity" class="proximity hidden"><span class="keycap">E</span><span id="proximity-text">Explore the art stand</span></div>
+    <div id="instructions" class="instructions hidden"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> WALK</span><span><span class="mouse-icon">◉</span> LOOK AROUND</span><span><kbd>E</kbd> EXPLORE ART</span><span><kbd>ESC</kbd> RELEASE MOUSE</span></div>
+    <button id="menu-btn" class="menu-btn hidden" aria-label="Open gallery list">☰ <span>GALLERY</span></button>
+    <div class="walk-hint hidden" id="walk-hint">Click the scene to look around · Use WASD or arrow keys to walk</div>
+    <div id="mobile-controls" class="mobile-controls hidden"><button id="left" aria-label="Turn left">↶</button><button id="forward" aria-label="Walk forward">↑</button><button id="backward" aria-label="Walk backward">↓</button><button id="right" aria-label="Turn right">↷</button><button id="open-nearby" aria-label="Explore nearby art stand">VIEW ART</button></div>
+    <div id="modal-layer" class="modal-layer hidden" role="presentation">
+      <div class="modal-backdrop" id="modal-backdrop"></div>
+      <article class="story-modal" role="dialog" aria-modal="true" aria-labelledby="story-title">
+        <button class="modal-close" id="close-modal" aria-label="Close exhibit">×</button>
+        <div class="modal-visual" id="modal-visual"><div class="visual-art"><span id="visual-number">01</span><div class="visual-orbit"></div><span id="visual-symbol">✳</span></div><div class="museum-tag">PERSONAL COLLECTION / 2026</div></div>
+        <div class="modal-content"><div class="modal-kicker" id="story-kicker">EXHIBIT 01 · SELECTED WORK</div><h2 id="story-title">The project</h2><div id="story-subtitle" class="modal-subtitle"></div><p id="story-body"></p><div id="story-highlights" class="highlights"></div><div class="modal-bottom"><span>PAUL-ANTOINE JOLY · CURATED WORK</span><button id="next-exhibit">NEXT EXHIBIT →</button></div></div>
+      </article>
+    </div>
+    <div id="gallery-layer" class="gallery-layer hidden"><div class="gallery-backdrop" id="gallery-backdrop"></div><aside class="gallery-panel"><button id="close-gallery" class="modal-close" aria-label="Close gallery">×</button><div class="gallery-caption">THE QUAYSIDE COLLECTION</div><h2>Choose a<br/><em>story.</em></h2><p>Eight chapters. One walk along the Seine.</p><div id="gallery-list"></div><div class="gallery-note">TIP: The art stands are waiting for you in the 3D world.</div></aside></div>
+    <div id="fatal" class="fatal hidden"><h2>Paris is having a technical moment.</h2><p>The 3D scene needs WebGL and an internet connection to load the Three.js engine.</p><button id="try-again">TRY AGAIN</button><button id="see-work">BROWSE THE WORK</button></div>
+    <footer class="footer"><span>MADE FOR THE CURIOUS</span><span>PAUL-ANTOINE JOLY © 2026</span><span>BUILT TO WANDER ✳</span></footer>
+  </main>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
