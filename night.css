@@ -1,0 +1,120 @@
+
+/* PARIS / AFTER DARK — Cycling-specific visual language */
+:root{color-scheme:dark}
+body{background:#050b15;color:#f8f1e7}
+#map{background:radial-gradient(ellipse at 50% 70%,#1f314c 0%,#090f1d 61%,#020713 100%)}
+#map canvas{filter:saturate(.82) contrast(1.24) brightness(.86)}
+.night-sky{position:absolute;z-index:1;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(2,6,17,.53) 0%,rgba(4,11,22,.25) 31%,transparent 57%),radial-gradient(ellipse at 72% 24%,rgba(123,139,184,.16),transparent 38%)}
+.night-sky:before{content:"";position:absolute;inset:0 0 34%;background-image:radial-gradient(1px 1px at 13% 17%,#f2e9dd 85%,transparent),radial-gradient(1px 1px at 52% 11%,#f6d7b7 85%,transparent),radial-gradient(1.5px 1.5px at 83% 8%,#f2e9dd 85%,transparent),radial-gradient(1px 1px at 22% 29%,#c5cce8 85%,transparent),radial-gradient(1px 1px at 94% 24%,#e8cfba 85%,transparent),radial-gradient(1px 1px at 63% 31%,#f9f4df 85%,transparent),radial-gradient(1px 1px at 45% 28%,#c5cce8 85%,transparent);background-repeat:repeat;background-size:550px 340px;opacity:.5;animation:nightStars 8s ease-in-out infinite alternate}
+@keyframes nightStars{from{opacity:.24}to{opacity:.56}}
+.city-aurora{position:absolute;z-index:1;inset:0;pointer-events:none;background:radial-gradient(ellipse at 65% 58%,rgba(254,171,75,.12),transparent 35%),radial-gradient(ellipse at 29% 76%,rgba(91,149,214,.12),transparent 30%),linear-gradient(180deg,transparent 51%,rgba(253,157,73,.07) 75%,transparent)}
+.headlight-beam{position:absolute;left:50%;bottom:6%;height:65%;width:65%;z-index:2;pointer-events:none;opacity:0;transform:translateX(-50%) perspective(500px) rotateX(30deg);background:conic-gradient(from 180deg at 50% 100%,transparent 0deg,rgba(255,225,164,.01) 14deg,rgba(255,229,177,.065) 25deg,rgba(255,235,189,.13) 40deg,rgba(255,229,177,.065) 55deg,rgba(255,225,164,.01) 65deg,transparent 85deg);filter:blur(18px);transition:opacity .7s}
+body.exploring .headlight-beam{opacity:.8}
+.scene-shading{background:linear-gradient(90deg,rgba(1,7,18,.81) 0%,rgba(2,8,17,.37) 31%,rgba(1,8,17,.03) 58%,rgba(2,7,17,.24) 100%),linear-gradient(180deg,rgba(1,6,14,.52) 0%,transparent 23%,rgba(3,8,17,.1) 65%,rgba(1,5,12,.74) 100%)}
+.site-header{padding-top:25px}
+.identity-edition{display:block;border-left:1px solid #e7ad6d8a;padding-left:14px;margin-left:5px;font-weight:700;font-size:8px;letter-spacing:.17em;color:#f2c999}
+.header-nav button,.header-nav a{color:#f4ebdf}
+.header-nav .say-hello{border-color:#e8c8a08c;background:rgba(6,16,28,.3)}
+.identity-monogram span{color:#efc18d}
+.welcome-eyebrow{top:25%;color:#f0c58e}
+.welcome-eyebrow i{background:#d5a868}
+.hero-copy{top:49%}
+.hero-copy h1{font-size:clamp(86px,8.2vw,135px);text-shadow:0 7px 45px #020713c2}
+.hero-copy h1 em{color:#f7ca93}
+.hero-copy>p{max-width:495px;font-size:15px;line-height:1.95}
+.hero-footnote{color:#dcbf9d}
+.welcome-side p{font-size:26px}
+.button-light{background:#f5e9d6}
+.button-light b{background:#dba56d}
+.bottom-copyright{z-index:10;color:#d5bda3}
+.map-topline{color:#f0d6b4}
+.live-dot{background:#f1c681;box-shadow:0 0 20px #f3ba66,0 0 35px #ecac6a80}
+.wayfinder{top:29%;width:min(325px,29vw);background:linear-gradient(135deg,#071321dc,#102536cf);border-color:#b6c9da42;box-shadow:0 20px 70px #020a16bd}
+.wayfinder-title{color:#fff2e3}
+.wayfinder-sub{color:#f6c48e}
+.wayfinder>p{color:#d0d9df}
+.map-action{border-color:#b8c5d47b;background:#0717255c}
+.map-action.active{background:linear-gradient(135deg,#f1d0a7,#e0a66d);color:#0c1b28;border-color:transparent}
+.walk-help{color:#e2d5c6}
+.walk-help kbd{background:#0e22339d}
+.city-ui-right{top:28%;gap:22px}
+.compass-ring{background:#101d2ab5;backdrop-filter:blur(10px);border-color:#c5d5e277;box-shadow:0 0 0 10px #d1dbe009}
+.bike-speed{display:grid;gap:8px;text-align:center;background:rgba(5,18,30,.54);padding:14px 12px;border:1px solid #bad0df4b;min-width:112px;backdrop-filter:blur(10px)}
+.bike-speed>strong{font:400 35px/1 'Playfair Display',serif;color:#f9dfb4}
+.bike-speed>strong small{font:700 8px 'DM Sans',sans-serif;letter-spacing:.1em}
+.bike-speed>span{font-size:8px;letter-spacing:.14em;color:#bdcddd}
+.bicycle-cockpit{position:absolute;z-index:2;left:50%;bottom:-19px;transform:translateX(-50%);width:min(48vw,620px);pointer-events:none;filter:drop-shadow(0 12px 25px #000e);opacity:.92;transition:opacity .6s;--bike-lean:0deg}
+.bicycle-cockpit svg{display:block;width:100%;transform:rotate(var(--bike-lean));transform-origin:50% 100%;transition:transform .13s ease-out}
+.bike-cockpit-caption{display:block;position:absolute;bottom:39px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:.24em;white-space:nowrap;color:#d3aa78;text-shadow:0 2px 14px black}
+.exploration .destinations{max-width:348px;left:4%;right:auto;bottom:30px;height:160px}
+.destination-heading{max-width:335px}
+.destination-scroll{max-width:340px;gap:7px}
+.destination-card{flex:0 0 162px;height:93px;background:#061725e3;border-color:#a5bcd063}
+.destination-copy strong{font-size:15px}
+.destination-card.seen{border-color:#ecbd79}
+.nearest-prompt{bottom:28%;background:linear-gradient(120deg,#0e2332eb,#061523eb);border-color:#d8a974;box-shadow:0 0 24px #dfa35c30,0 14px 35px #0009}
+.story-pin{filter:drop-shadow(0 4px 17px #050e20)}
+.pin-signal{border-color:#fbd0a5;color:#ffdb9c;background:#081825f2;box-shadow:0 0 0 7px #f0bb6e1b,0 0 26px #f2ad568a}
+.pin-label{background:#061b2be8;border-color:#efc48b8c;color:#fff0dc}
+.pin-index{color:#fae1ba}
+.story-pin:hover .pin-signal{box-shadow:0 0 0 10px #f0bb6e28,0 0 34px #f2ad56c5}
+.night-streetlight{width:8px;height:8px;border-radius:50%;border:0;background:#fff0b5;box-shadow:0 0 5px 2px #ffe2a6,0 0 16px 7px #f4b36c9e,0 0 36px 15px #e49e574a;pointer-events:none;opacity:.8}
+.night-streetlight.is-blue{background:#d6eeff;box-shadow:0 0 5px 2px #d6eeff,0 0 18px 7px #6da9ff90,0 0 32px 12px #6da9ff40}
+#maptoolkit-attribution{left:auto;right:12px;bottom:7px;z-index:11}
+.maplibregl-ctrl-attrib{background:rgba(6,16,27,.72)!important;color:#bdcbd7!important}
+.maplibregl-ctrl-attrib a{color:#dfbd91!important}
+.collection-panel{background:#eae6de}
+.sheet-art{background:linear-gradient(135deg,#081a2c,var(--exhibit-accent) 150%)}
+body:not(.exploring) .bicycle-cockpit{opacity:0}
+@media(max-width:1000px){
+ .identity-edition{display:none}
+ .wayfinder{width:285px;left:3%}
+ .city-ui-right{right:3%}
+ .exploration .destinations{left:3%;max-width:310px}
+ .destination-scroll{max-width:305px}
+ .bicycle-cockpit{width:min(53vw,540px)}
+}
+@media(max-width:750px){
+ .welcome-eyebrow{top:20%}
+ .hero-copy h1{font-size:clamp(62px,12.4vw,92px)}
+ .hero-copy>p{font-size:12px}
+ .identity-name{font-size:7px}
+ .identity-edition{display:none}
+ .map-topline{top:84px}
+ .wayfinder{left:5%;top:110px;width:min(260px,67vw);padding:12px}
+ .wayfinder-title{font-size:24px}
+ .wayfinder-sub{font-size:7px}
+ .wayfinder>p{font-size:10px;line-height:1.5}
+ .wayfinder-actions{margin-top:11px}
+ .walk-help{font-size:7px;gap:3px}
+ .walk-help kbd{font-size:8px}
+ .city-ui-right{top:111px;right:3%}
+ .compass-ring{width:48px;height:48px}
+ .bike-speed{min-width:70px;padding:9px 3px;gap:4px}
+ .bike-speed>strong{font-size:25px}
+ .bike-speed>strong small{font-size:6px}
+ .bike-speed>span{font-size:6px}
+ .bicycle-cockpit{bottom:80px;width:68vw;opacity:.9}
+ .bicycle-cockpit svg{max-height:150px}
+ .bike-cockpit-caption{font-size:6px;bottom:0}
+ .exploration .destinations{left:5%;bottom:33px;max-width:65vw;height:100px}
+ .destination-heading{font-size:7px;margin-bottom:5px}
+ .destination-heading small{font-size:7px}
+ .destination-scroll{max-width:65vw}
+ .destination-card{flex-basis:126px;height:70px;padding:7px}
+ .destination-copy strong{font-size:12px}
+ .destination-number{font-size:11px}
+ .destination-copy small{font-size:7px}
+ .mobile-movement{bottom:145px;right:5%}
+ .mobile-movement button{width:39px;height:39px;border-color:#e3bc8c8a;background:#071827d9}
+ .nearest-prompt{bottom:38%;font-size:9px;padding:7px}
+ .bottom-copyright{display:none}
+ #maptoolkit-attribution{right:8px;bottom:5px}
+}
+@media(max-width:400px){
+ .bicycle-cockpit{bottom:97px;width:78vw}
+ .wayfinder{width:62vw}
+ .city-ui-right{right:2%}
+ .mobile-movement{bottom:130px}
+}
+@media(prefers-reduced-motion:reduce){.night-sky:before{animation:none}.bicycle-cockpit svg{transition:none}}

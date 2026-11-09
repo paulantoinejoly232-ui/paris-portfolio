@@ -1,45 +1,61 @@
-# A Walk Through Paris — Paul-Antoine Joly
+# Paris, After Dark — Paul-Antoine Joly
 
-A cinematic 3D portfolio: take a sunset stroll along the Seine and approach eight green art stands to discover personal projects, work, and interests.
+An interactive personal portfolio built around an atmospheric **nighttime cycling journey through Paris**. Inspired by the *interactive-environment concept* of Jesse Zhou's 3D Ramen Shop, while using original UI, original portfolio content, and real geographic map data (no copied assets).
 
-## Run
+## Ride controls
 
-This is a **static website**, no build command or account required.
+| Input | Action |
+| --- | --- |
+| **W / Up** | Pedal and accelerate |
+| **S / Down** | Brake; hold to reverse slowly |
+| **A / Left** | Steer left |
+| **D / Right** | Steer right |
+| **Shift** | Sprint while pedaling |
+| **E** | Open a nearby glowing portfolio exhibit |
+| **B** | Ring the bicycle bell when ambience is on |
+| **M** | See the aerial city overview |
+| **Mouse drag** | Look to the sides temporarily |
+| **Touch arrows** | Ride on mobile |
 
-- From the project folder run `python3 -m http.server 8000` and open `http://localhost:8000`.
-- Or install the Vercel CLI and run `vercel` in the project folder.
-- Or push the contents to a GitHub repo and import it in Vercel. Framework Preset: **Other**; Build Command: **none**; Output Directory: **./**.
-- In Vercel project settings > Domains, connect your own domain (e.g. `paulantoinejoly.com`) and follow the DNS instructions.
+- Speed rises and falls gradually; the handlebar overlay leans when steering.
+- A low free-camera mode positions the viewpoint close to bicycle height. Camera position follows simulated bicycle coordinates.
+- Aerial view lets visitors navigate by zooming, panning or selecting exhibits. Choose **Ride Mode** to return to the bicycle.
+- The map covers central and surrounding Paris within configured bounds. This is free-roam **camera navigation**, not yet collision-aware, road-snapped bike physics.
+- The map includes eight portfolio exhibits based on real Paris geographic points. Pins are themed project placements, **not** employer office locations.
+- The speedometer and distance tracker are simulation values, not actual measurements of a route or cycling activity.
+- Ambient wind is synthesized in-browser and off by default. Bell is synthesized with audio oscillators and requires enabled ambience.
 
-The runtime imports Three.js from jsDelivr CDN, and therefore needs a network connection. A fallback graphic is provided while the 3D scene loads.
+## Visual design
 
-## Controls
+- Deep indigo night sky, warm amber light blooms and glowing geographic markers.
+- Night color treatment applied to the Street 3D vector map, with dark water, roads, parks and building volumes.
+- MapLibre sky/fog treatment, evening lighting, and a skyline viewed from a low camera angle.
+- Simulated streetlights placed artistically around the Seine (not an accurate streetlight inventory).
+- Illustrated bicycle cockpit, headlight beam and optional atmospheric audio.
+- Responsive typography, cinematic welcome, touch controls, and accessible portfolio drawers.
 
-- **Start:** BEGIN THE WALK
-- **Move:** W A S D or W / S / arrow-up / arrow-down
-- **Look:** mouse (click to lock cursor) or drag on canvas; left/right arrows to turn
-- **Sprint:** Shift + W
-- **Interact:** E when near a green Seine art stand
-- **Gallery:** menu button or G
-- **Exit interaction / release:** Escape
-- **Mobile:** touch direction buttons and VIEW ART when close to a stand
+## Technical stack
 
-## Customize
+- Static HTML/CSS and vanilla JS with MapLibre GL JS 6, hosted on Vercel.
+- Maptoolkit Community Street 3D style based on OpenStreetMap with optional Scene3D roof/tree enhancement.
+- Maptoolkit 3D and style attribution is retained. See https://docs.maptoolkit.org.
+- No application secret is required. Scene loading depends on network availability and browser WebGL support.
+- `index.html`: semantic UI structure.
+- `city.js`: map initialization, cycling simulation, 3D camera, story interactions and audio.
+- `city.css`: base responsive interface.
+- `night.css`: atmospheric presentation, night overlays and cockpit illustration.
+- `vercel.json`: existing Vercel config.
 
-- Edit the `exhibits` array near the top of `main.js` for accurate professional projects and bios.
-- `styles.css` controls HTML user interface and fonts.
-- `main.js` controls environmental lighting, architecture, river, and work stands. You can replace procedural objects with real licensed photogrammetry/glTF assets using Three.js `GLTFLoader`.
+For local development run `python3 -m http.server 8000` from this repository and open http://localhost:8000. For Vercel use **Framework Preset: Other**, no build command, output directory `./`.
 
-## Visual honesty / limitations
+## Deployment and auto-updates
 
-This is a **playable atmospheric 3D concept** with procedural Paris-inspired façades, Louvre-style stone texture, quayside boxes, a bridge, sunset lighting, water shaders and a simplified Eiffel Tower silhouette. It is not a photogrammetric or geographically accurate reconstruction of a particular stretch of the Seine. For *true* high-end photorealism, use detailed licensed textured 3D buildings, scanned quay assets, HDR environment maps, volumetrics, postprocessing, and rigorous device performance testing. Those assets are not included here.
+The existing Vercel project automatically publishes deployments of the repository's production branch (**main**) and generates previews for pull request branches. The project already has successful Vercel GitHub statuses. **This branch is for preview only** until verified and merged; pushing to it should update its preview, not the live paulantoinejoly.com domain.
 
-The artwork and portfolio details are illustrative/curated and should be reviewed before public deployment. No private contact information is included.
+## Reality check: visual fidelity
 
-## Files
+This is a polished, playable **3D city-map prototype**, **not hyper-photorealistic Paris**. It lacks photogrammetric building textures, high-quality night window emissives, people/vehicles, detailed street furniture, collision, terrain-safe bike physics and dedicated route mesh. The bike is represented via a first-person cockpit overlay rather than a fully rigged third-person model.
 
-- `index.html` — markup + accessibility shell
-- `styles.css` — editorial overlay and responsive navigation
-- `main.js` — 3D scene, movement, interactions, exhibits
+For Jesse-Zhou-level detailed interaction *across the entire city*, the next phase needs a high-quality custom Three.js/Blender district around the Seine, with carefully licensed glTF assets and real-time lighting, optionally transitioning into the geographic map for citywide exploration. Google photorealistic 3D Tiles, when considered, need separate API keys, commercial licensing and usage-cost planning.
 
-© 2026 personal website prototype. Three.js is loaded from the official jsDelivr distribution under its own license.
+© 2026 Paul-Antoine Joly.
