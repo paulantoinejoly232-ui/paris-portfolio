@@ -1,45 +1,51 @@
-# A Walk Through Paris — Paul-Antoine Joly
+# A Walk Through Paris — city-scale interactive portfolio
 
-A cinematic 3D portfolio: take a sunset stroll along the Seine and approach eight green art stands to discover personal projects, work, and interests.
+This branch implements a **navigable 3D map of Paris** as the foundation of Paul-Antoine Joly's personal portfolio, inspired by the *interaction design approach* of Jesse Zhou's 3D Ramen Shop (without copying models, textures, or code).
 
-## Run
+## Features
 
-This is a **static website**, no build command or account required.
+- Explore a geographically grounded, streamed map of **all of Paris**, rather than a single static 3D scene.
+- Tilt, rotate, pan and zoom around OpenStreetMap-based buildings and Paris streets.
+- Eight story pins across well-known Paris landmarks, each opening a curated portfolio exhibit.
+- Click **Enter Paris** for a close camera perspective near the Seine.
+- Use **WASD** to move the camera, arrow keys to turn; **E** opens a nearby exhibit.
+- Choose a destination to fly between locations, or use **City Overview** for the whole city.
+- Mobile-friendly touch movement, touch-based maps, project list and keyboard escape handling.
+- 3D roofs and trees loaded as an optional enhancement where available from the Maptoolkit scene plugin.
 
-- From the project folder run `python3 -m http.server 8000` and open `http://localhost:8000`.
-- Or install the Vercel CLI and run `vercel` in the project folder.
-- Or push the contents to a GitHub repo and import it in Vercel. Framework Preset: **Other**; Build Command: **none**; Output Directory: **./**.
-- In Vercel project settings > Domains, connect your own domain (e.g. `paulantoinejoly.com`) and follow the DNS instructions.
+## Run locally
 
-The runtime imports Three.js from jsDelivr CDN, and therefore needs a network connection. A fallback graphic is provided while the 3D scene loads.
+This is a plain static Vercel project. With files checked out, run:
 
-## Controls
+```bash
+python3 -m http.server 8000
+```
 
-- **Start:** BEGIN THE WALK
-- **Move:** W A S D or W / S / arrow-up / arrow-down
-- **Look:** mouse (click to lock cursor) or drag on canvas; left/right arrows to turn
-- **Sprint:** Shift + W
-- **Interact:** E when near a green Seine art stand
-- **Gallery:** menu button or G
-- **Exit interaction / release:** Escape
-- **Mobile:** touch direction buttons and VIEW ART when close to a stand
+Open `http://localhost:8000`. Framework preset: **Other**; no build command.
 
-## Customize
+## Deploying to paulantoinejoly.com
 
-- Edit the `exhibits` array near the top of `main.js` for accurate professional projects and bios.
-- `styles.css` controls HTML user interface and fonts.
-- `main.js` controls environmental lighting, architecture, river, and work stands. You can replace procedural objects with real licensed photogrammetry/glTF assets using Three.js `GLTFLoader`.
+GitHub's `main` branch is connected to Vercel; recent commits have been successfully deployed. This feature remains on its own branch until reviewed and merged into `main`. Assuming the Vercel project's **Production Branch** stays set to `main` and the custom domain is attached to the same project, merging to `main` triggers automatic production deployment. Other branches can receive preview deployments.
 
-## Visual honesty / limitations
+## Technology and data
 
-This is a **playable atmospheric 3D concept** with procedural Paris-inspired façades, Louvre-style stone texture, quayside boxes, a bridge, sunset lighting, water shaders and a simplified Eiffel Tower silhouette. It is not a photogrammetric or geographically accurate reconstruction of a particular stretch of the Seine. For *true* high-end photorealism, use detailed licensed textured 3D buildings, scanned quay assets, HDR environment maps, volumetrics, postprocessing, and rigorous device performance testing. Those assets are not included here.
+- MapLibre GL JS 6, loaded from unpkg.
+- Maptoolkit Community tiles: `https://styles.maptoolkit.org/street-3d.json`, based on OpenStreetMap. **Visible map and copyright attribution must be retained.**
+- Optional `@maptoolkit/maplibre-scene3d-control` for roof models and trees. The built-in extrusion map remains usable if the enhancement is unavailable.
+- No map API key is required with this community style for eligible personal sites; follow current [community terms](https://www.maptoolkit.org/).
+- No copies of proprietary Paris 3D meshes, imagery or of Jesse Zhou's ramen shop artwork are included.
 
-The artwork and portfolio details are illustrative/curated and should be reviewed before public deployment. No private contact information is included.
+## What this is *not* (yet)
 
-## Files
+The city-scale map currently has GIS-grade OSM geometry, not a handcrafted, photo-realistic recreation of every Paris building. It is also a pitched navigable map camera, not full first-person collision-aware street navigation. To achieve Jesse's **fully bespoke immersive quality**, the next stage is building a highly detailed **Seine/Île de la Cité experience** in Blender/Three.js and blending it into the streamed city environment; true citywide photorealism would likely require commercial licensed photogrammetry or 3D map tiles, substantial bandwidth and rendering budgets.
 
-- `index.html` — markup + accessibility shell
-- `styles.css` — editorial overlay and responsive navigation
-- `main.js` — 3D scene, movement, interactions, exhibits
+The eight map pin placements are thematic exhibits, **not representations of physical employer office locations**.
 
-© 2026 personal website prototype. Three.js is loaded from the official jsDelivr distribution under its own license.
+## Main files
+
+- `index.html` — page markup and project exhibits
+- `city.css` — interface, typography, map styling and mobile layout
+- `city.js` — MapLibre controls, 3D camera, map pins and exhibits
+- `main.js` and `styles.css` — retained from the original prototype for reference; unused by the new landing page
+
+© 2026 Paul-Antoine Joly.
