@@ -13,6 +13,7 @@
     {name:'Say bonjour.',company:'Contact',chapter:'GET IN TOUCH',place:'Île Saint-Louis',coords:[2.35638,48.85182],symbol:'♥',accent:'#d59a9f',subtitle:'Where should we go next?',lead:'The best conversations start somewhere.',detail:'Thanks for walking through this imagined Paris with me. If you want to discuss product, technology, strategy or an interesting project, feel free to reach out.',metrics:['Open to collaboration','Product & strategy','paulantoinejoly@g.ucla.edu']}
   ];
   let maplibregl=null;
+  let soundOn=false,audioContext=null,noise=null,windGain=null;
   const bike={coord:[2.33749,48.85834],heading:-32,speed:0,distance:0,lookOffset:0,active:false,warned:false};
   let map=null, entered=false, ready=false, walking=true, nearby=-1, current=-1, lastWheel=0;
   const visited=new Set(), keys=new Set();
@@ -138,6 +139,11 @@
           new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(s.coords).addTo(map);
         });
         map.resize();makeNightLights();near();
+        const canvas=map.getCanvas();let dragging=false,lastX=0;
+        canvas.addEventListener('pointerdown',e=>{if(!walking)return;dragging=true;lastX=e.clientX;canvas.setPointerCapture(e.pointerId);});
+        canvas.addEventListener('pointermove',e=>{if(!dragging||!walking)return;const dx=e.clientX-lastX;lastX=e.clientX;bike.lookOffset=Math.max(-50,Math.min(50,bike.lookOffset+dx*.16));});
+        canvas.addEventListener('pointerup',()=>dragging=false);
+        canvas.addEventListener('pointercancel',()=>dragging=false);
         try{
           const mod=await import('https://unpkg.com/@maptoolkit/maplibre-scene3d-control@0.3.0/dist/maplibre-scene3d-control.standalone.js');
           if(mod.Scene3dControl)map.addControl(new mod.Scene3dControl());
@@ -188,6 +194,7 @@
   function frame(now){const dt=Math.min((now-lastFrame)/1000||0,.05);lastFrame=now;walk(dt);requestAnimationFrame(frame);}
   function controls(){
     $('#begin').onclick=start;$('#see-collection').onclick=openCollection;
+    $('#sound-toggle').onclick=toggleCitySound;
     $('#nav-paris').onclick=()=>entered?overview():start();
     $('#nav-work').onclick=openCollection;$('#nav-about').onclick=()=>openStory(4);
     $('#city-overview').onclick=overview;
@@ -211,6 +218,7 @@
       if(['KeyW','KeyA','KeyS','KeyD','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','ShiftLeft','ShiftRight'].includes(e.code))e.preventDefault();
       if(e.code==='KeyE'&&nearby>=0){openStory(nearby);return;}
       if(e.code==='KeyM'){overview();return;}
+      if(e.code==='KeyB'){bicycleBell();return;}
       keys.add(e.code);
     });
     document.addEventListener('keyup',e=>keys.delete(e.code));
@@ -287,6 +295,37 @@
       el.setAttribute('aria-hidden','true');
       new maplibregl.Marker({element:el,anchor:'center'}).setLngLat([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]).addTo(map);
     }
+  });
+}
+  function toggleCitySound(){
+  if(!audioContext){
+    const AudioContextCtor=window.AudioContext||window.webkitAudioContext;
+    if(!AudioContextCtor){$('#sound-toggle').textContent='AUDIO UNAVAILABLE';return;}
+    audioContext=new AudioContextCtor();
+    const buffer=audioContext.createBuffer(1,audioContext.sampleRate*3,audioContext.sampleRate);
+    const data=buffer.getChannelData(0);
+    for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.16;
+    noise=audioContext.createBufferSource();noise.buffer=buffer;noise.loop=true;
+    const lowPass=audioContext.createBiquadFilter();lowPass.type='lowpass';lowPass.frequency.value=340;
+    windGain=audioContext.createGain();windGain.gain.value=0;
+    noise.connect(lowPass).connect(windGain).connect(audioContext.destination);
+    noise.start();
+  }
+  audioContext.resume();
+  soundOn=!soundOn;
+  windGain.gain.setTargetAtTime(soundOn?.025:0,audioContext.currentTime,.35);
+  $('#sound-toggle').textContent=soundOn?'AMBIENCE ON ◉':'AMBIENCE OFF ◌';
+}
+  function bicycleBell(){
+  if(!soundOn||!audioContext)return;
+  const now=audioContext.currentTime;
+  [880,1320].forEach((freq,i)=>{
+    const osc=audioContext.createOscillator(),gain=audioContext.createGain();
+    osc.type='sine';osc.frequency.setValueAtTime(freq,now);osc.frequency.exponentialRampToValueAtTime(freq*.96,now+.7);
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.exponentialRampToValueAtTime(i===0?.095:.045,now+.012+i*.015);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+.9);
+    osc.connect(gain).connect(audioContext.destination);osc.start(now);osc.stop(now+.95);
   });
 }
   content();controls();setupMap();requestAnimationFrame(frame);
