@@ -1,45 +1,57 @@
-# A Walk Through Paris — Paul-Antoine Joly
+# Paris After Dark — a playable 3D cycling portfolio
 
-A cinematic 3D portfolio: take a sunset stroll along the Seine and approach eight green art stands to discover personal projects, work, and interests.
+**This is a real Three.js world, not a pitched map or a slideshow.** Visitors ride a virtual bicycle beside the Seine at night and discover Paul-Antoine Joly's portfolio at illuminated art stands.
 
-## Run
-
-This is a **static website**, no build command or account required.
-
-- From the project folder run `python3 -m http.server 8000` and open `http://localhost:8000`.
-- Or install the Vercel CLI and run `vercel` in the project folder.
-- Or push the contents to a GitHub repo and import it in Vercel. Framework Preset: **Other**; Build Command: **none**; Output Directory: **./**.
-- In Vercel project settings > Domains, connect your own domain (e.g. `paulantoinejoly.com`) and follow the DNS instructions.
-
-The runtime imports Three.js from jsDelivr CDN, and therefore needs a network connection. A fallback graphic is provided while the 3D scene loads.
+The site keeps its existing Vercel static hosting and its GitHub-based deployment pipeline.
 
 ## Controls
 
-- **Start:** BEGIN THE WALK
-- **Move:** W A S D or W / S / arrow-up / arrow-down
-- **Look:** mouse (click to lock cursor) or drag on canvas; left/right arrows to turn
-- **Sprint:** Shift + W
-- **Interact:** E when near a green Seine art stand
-- **Gallery:** menu button or G
-- **Exit interaction / release:** Escape
-- **Mobile:** touch direction buttons and VIEW ART when close to a stand
+- **W / Up** — pedal and accelerate.
+- **S / Down** — brake or slowly reverse.
+- **A / D / left / right arrows** — steer.
+- **Shift** — sprint while pedaling.
+- **E** — open a nearby exhibit.
+- **G** — open the project gallery.
+- **Drag the scene with a mouse** — look around.
+- **Mobile** — directional touch buttons.
+- **Sound button** — toggle optional synthesized wind ambience.
 
-## Customize
+## What is actually in the 3D scene
 
-- Edit the `exhibits` array near the top of `main.js` for accurate professional projects and bios.
-- `styles.css` controls HTML user interface and fonts.
-- `main.js` controls environmental lighting, architecture, river, and work stands. You can replace procedural objects with real licensed photogrammetry/glTF assets using Three.js `GLTFLoader`.
+The environment is authored with Three.js mesh geometry, materials and animated shaders rather than a MapLibre map. It includes:
 
-## Visual honesty / limitations
+- a rideable 700-metre *Paris-inspired* waterfront corridor at night,
+- masonry quays, wet cobblestones, street and road geometry,
+- Haussmann-inspired 3D building volumes, mansard roofs, dormer windows, balconies, lit shopfronts and façade textures,
+- animated Seine water shader with nocturnal reflections,
+- wrought-iron lamps and glowing light sprites,
+- trees, car headlights, moving vehicles and light mist,
+- a distant Eiffel Tower silhouette, an arched bridge and twilight/night sky,
+- a 3D bike handlebar cockpit attached to the first-person camera,
+- eight bookstall-style interactive project exhibits.
 
-This is a **playable atmospheric 3D concept** with procedural Paris-inspired façades, Louvre-style stone texture, quayside boxes, a bridge, sunset lighting, water shaders and a simplified Eiffel Tower silhouette. It is not a photogrammetric or geographically accurate reconstruction of a particular stretch of the Seine. For *true* high-end photorealism, use detailed licensed textured 3D buildings, scanned quay assets, HDR environment maps, volumetrics, postprocessing, and rigorous device performance testing. Those assets are not included here.
+The bike uses simple acceleration / friction / steering simulation, with a speedometer and distance counter. This is **not** collision-aware cycling; the current ride is constrained to a waterfront play area.
 
-The artwork and portfolio details are illustrative/curated and should be reviewed before public deployment. No private contact information is included.
+## Technical stack
 
-## Files
+- Three.js 0.180, native ES modules, JavaScript, CSS.
+- Three.js EffectComposer + bloom for scene glow on capable desktop devices.
+- Canvas-generated textures and 3D meshes with no external paid API, only the Three.js CDN.
+- Vercel static website, no build command. Serve locally with `python3 -m http.server 8000`.
+- `index.html` — page and gallery/exhibit structure.
+- `ride.css` — cinematic typography and responsive interface.
+- `world.js` — real-time 3D buildings, streets, river, monuments, lighting, stalls and bike cockpit.
+- `ride.js` — cycling controls, camera, WebGL renderer, bloom, gallery and optional audio.
+- Previous `main.js` and `styles.css` remain from the original prototype but are not loaded.
 
-- `index.html` — markup + accessibility shell
-- `styles.css` — editorial overlay and responsive navigation
-- `main.js` — 3D scene, movement, interactions, exhibits
+## Visual quality / limitations
 
-© 2026 personal website prototype. Three.js is loaded from the official jsDelivr distribution under its own license.
+This is a **genuine explorable 3D prototype**, but not hyper-photorealistic or geographically accurate Paris. Realistically portraying *all* of Paris requires a different production pipeline: licensed photogrammetry or 3D Tiles, detailed Paris landmarks and street-level assets, collision data, aggressive streaming, custom night shaders, artist-reviewed materials, and performance optimization. None of that can be honestly claimed from procedural meshes alone.
+
+To reach the high-detail interactive quality of Jesse Zhou's Ramen Shop, build one exceptionally detailed neighborhood with licensed textured 3D assets and PBR materials, then use streamed world tiles to extend the environment. The current version is intended as an engine and interaction foundation for that work.
+
+## Production auto-update
+
+Vercel already deploys the connected GitHub repository. The custom domain **paulantoinejoly.com** should update automatically when changes are merged or pushed to the configured production branch (`main`) after review. This new version is on a feature branch and will **not** overwrite production until merged.
+
+© 2026 Paul-Antoine Joly.
