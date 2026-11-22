@@ -42,7 +42,7 @@ jobs:
         run: |
           mkdir -p public/assets
           curl --fail --location --silent --show-error --retry 2 \
-            'https://images.unsplash.com/photo-1470567391542-83b5ed63ea5b?fm=jpg&fit=crop&w=1800&q=84' \
+            'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?fm=jpg&fit=crop&w=1800&q=84' \
             --output public/assets/paris-eiffel.jpg
           file public/assets/paris-eiffel.jpg
       - name: Upload Blender review screenshot
