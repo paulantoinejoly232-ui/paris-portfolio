@@ -196,11 +196,31 @@ cube('Cross beam',P(0,4.32,-2.5),(14,.2,.16),TRIM)
 for i in range(6):
  x=-6.95+i*1.79
  cube('French door stile',P(x,2.20,-6.87),(.075,.16,3.42),TRIM,.009)
- if i<5:
+ if i<5 and i!=2:
   cube('French door glazing',P(x+.895,2.19,-6.94),(1.73,.008,3.32),GLASS,trans=True)
   cube('Window midrail',P(x+.895,2.11,-6.84),(1.70,.09,.045),TRIM,.007)
   cube('Window upper rail',P(x+.895,3.39,-6.84),(1.70,.09,.045),TRIM,.007)
   cube('Door handles brushed brass',P(x+.9,1.48,-6.79),(.035,.07,.21),BRASS,.008)
+
+# Signature of the source photo: one French door is open inwards. The door
+# comprises real glass, painted wood, brass handle and hinged frame; not an image.
+hinge_x=-6.95+2*1.79
+hinge=bpy.data.objects.new('Open French door - hinged 52 degrees',None)
+scene.collection.objects.link(hinge)
+hinge.location=P(hinge_x,0,-6.86)
+hinge.rotation_euler.z=-math.radians(52)
+def hinged_cube(label,dx,h,zdepth,width,depth,height,mat,r=.0,glazing=False):
+ o=cube(label,(0,0,0),(width,depth,height),mat,r,trans=glazing)
+ o.parent=hinge
+ o.location=(dx,-zdepth,h)
+ return o
+hinged_cube('Open French door frameless clear glass',.86,2.13,.0,1.63,.009,3.22,GLASS,glazing=True)
+for xx in (0.04,1.73):
+ hinged_cube('Open French door white stile',xx,2.14,.005,.085,.11,3.40,TRIM,.009)
+for yy in (.45,2.08,3.82):
+ hinged_cube('Open French door white horizontal rail',.87,yy,.005,1.72,.095,.058,TRIM,.005)
+hinged_cube('Open French door brass handle',1.56,1.50,-.072,.045,.07,.16,BRASS,.009)
+
 for i in range(4):
  z=-6.8+i*1.53
  cube('Kitchen side window stile',P(6.86,2.20,z),(.16,.08,3.42),TRIM)
@@ -487,6 +507,18 @@ _upgrade('real potted plant',
  ('flower pot','plant trunk','plant twig','olive foliage'))
 # Reupholster both complete CC0 chairs (imports finish before this pass).
 _reupholster_chairs()
+
+# Real-world sculpted coffee tables and ceramics: essential close-up details.
+_upgrade('scanned sculptural marble round coffee table',
+ lambda:_polyhaven('coffee_table_round_01',(-3.45,-1.41,0),1.36),
+ ('round coffee pedestal','round coffee surface'))
+_upgrade('wood and stone rectangular coffee table',
+ lambda:_polyhaven('modern_coffee_table_01',(-3.10,.05,0),1.53),
+ ('rectangular coffee base','rectangular marble top'))
+_upgrade('hand-painted ceramic table vase',
+ lambda:_polyhaven('ceramic_vase_04',(-3.0,.16,.55),.28,0,.26),
+ ('flower vase',))
+
 # Natural oak material has scanned PBR colour/roughness/normal maps.
 scanned_surface('herringbone_parquet',FLOOR,'2k')
 
