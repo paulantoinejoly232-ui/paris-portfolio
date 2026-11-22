@@ -166,7 +166,12 @@ def light(name,typ,loc,color,power,size=None):
 # Apartment architecture: metres, Y is horizontal depth in Blender, Z vertical.
 # Three.js frontend uses Y vertical, negative Z towards the Paris window.
 def P(x,height,z):return (x,-z,height)
-cube('Solid herringbone oak floor',P(0,-.15,0),(14,14,.25),FLOOR)
+floor=cube('Solid herringbone oak floor',P(0,-.15,0),(14,14,.25),FLOOR)
+# One texture unit covers ~3.5m, never the entire 14m room.
+if floor.data.uv_layers.active:
+ for cell in floor.data.uv_layers.active.data:
+  cell.uv.x*=4.0
+  cell.uv.y*=4.0
 cube('Warm plaster ceiling',P(0,4.47,0),(14,14,.24),TRIM)
 cube('Left apartment wall',P(-6.98,2.2,0),(.2,14,4.4),PLASTER)
 cube('Right apartment wall',P(6.98,2.2,0),(.2,14,4.4),PLASTER)
@@ -323,6 +328,56 @@ for z in (3.2,5.1):
 # Sources:
 # Poly Haven modern_arm_chair_01 + dining_chair_02 + potted_plant_01 (CC0)
 # 3DAssets.dev sofa three seat (CC0).
+
+# An actual CC0 scanned surface is dramatically more realistic than the
+# old synthetic stripes, which looked like large dark cracks in the floor.
+def scanned_surface(asset_id, mat, size='2k'):
+ import json,urllib.request
+ request=urllib.request.Request('https://api.polyhaven.com/files/'+asset_id,
+                                headers={'User-Agent':'ParisPortfolio-CC0-Archviz/1.0'})
+ try:
+  info=json.load(urllib.request.urlopen(request,timeout=30))
+  nt=mat.node_tree
+  bs=nt.nodes.get('Principled BSDF')
+  for node in list(nt.nodes):
+   if node.type=='TEX_IMAGE':
+    nt.nodes.remove(node)
+  mappings=[
+   ('Diffuse','Base Color','sRGB'),
+   ('Rough','Roughness','Non-Color'),
+   ('nor_gl','Normal','Non-Color')
+  ]
+  for key,target,cs in mappings:
+   variants=info.get(key,{})
+   entry=None
+   for resolution in (size,'1k'):
+    for extension in ('jpg','png'):
+     entry=variants.get(resolution,{}).get(extension)
+     if entry:break
+    if entry:break
+   if not entry:continue
+   suffix='jpg' if entry['url'].lower().split('?')[0].endswith('.jpg') else 'png'
+   filepath=os.path.join(OUT,'CC0-'+asset_id+'-'+key+'.'+suffix)
+   _download(entry['url'],filepath)
+   image=bpy.data.images.load(filepath,check_existing=True)
+   image.colorspace_settings.name=cs
+   node=nt.nodes.new('ShaderNodeTexImage')
+   node.image=image
+   if target=='Normal':
+    normal=nt.nodes.new('ShaderNodeNormalMap')
+    normal.inputs['Strength'].default_value=.42
+    nt.links.new(node.outputs['Color'],normal.inputs['Color'])
+    nt.links.new(normal.outputs['Normal'],bs.inputs['Normal'])
+   else:
+    for link in list(bs.inputs[target].links):
+     nt.links.remove(link)
+    nt.links.new(node.outputs['Color'],bs.inputs[target])
+  bs.inputs['Base Color'].default_value=(1,1,1,1)
+  mat.roughness=.5
+  print('MATERIAL UPGRADE CC0 Poly Haven',asset_id)
+ except Exception as error:
+  print('MATERIAL FALLBACK',asset_id,repr(error))
+
 def _download(url,path):
  import urllib.request, shutil
  os.makedirs(os.path.dirname(path),exist_ok=True)
@@ -394,6 +449,16 @@ def _upgrade(name,fn,remove):
 _upgrade('modern three-seat sofa',
  lambda:_cdnglb('modern 3-seat sofa','https://cdn.3dassets.dev/assets/38778/v1/model.glb',(-5.5,-2.18,0),2.54,.1),
  ('sofa seat','sofa back','sofa arm','seat cushion','back cushion'))
+# Replace all leather-looking charcoal seat cushions with warm textured linen.
+# The source geometry is kept, including its real stitching and cushioning.
+def _reupholster_chairs():
+ for obj in bpy.data.objects:
+  if not obj.name.startswith('CC0 modern armchair'):continue
+  if obj.type!='MESH':continue
+  for slot in obj.material_slots:
+   if slot.material and any(w in slot.material.name.lower() for w in ('pillow','leather','cushion','seat')):
+    slot.material=FABRIC
+_reupholster_chairs()
 _upgrade('modern armchair left',
  lambda:_polyhaven('modern_arm_chair_01',(-3.35,1.07,0),1.09,.20),
  ('armchair seat','armchair back','armchair arm','armchair linen cushion'))
@@ -412,9 +477,72 @@ for position,rotation in [
 _upgrade('real potted plant',
  lambda:_polyhaven('potted_plant_01',(-6.35,6.10,0),1.0,0,1.44),
  ('flower pot','plant trunk','plant twig','olive foliage'))
+# Reupholster both complete CC0 chairs (imports finish before this pass).
+_reupholster_chairs()
+# Natural oak material has scanned PBR colour/roughness/normal maps.
+scanned_surface('herringbone_parquet',FLOOR,'2k')
+
+
+# Real pleated linen instead of vertical rectangular bars.
+# Sinusoidal cloth profile, subdued seams, hem and believable fabric thickness.
+def linen_curtain(name,left,width,depth,height=3.6):
+ nx=48;ny=28
+ verts=[];faces=[];uv=[]
+ for j in range(ny+1):
+  t=j/ny
+  for i in range(nx+1):
+   u=i/nx
+   x=left+width*u
+   wave=.095*sin(2*pi*u*7.5)+.025*sin(2*pi*u*3.1)
+   # bottom gathers slightly, rather than being a perfectly flat rectangle
+   wave*=1+.24*t
+   y=depth+wave
+   z=.40+t*height
+   verts.append(P(x,z,y))
+ for j in range(ny):
+  for i in range(nx):
+   a=j*(nx+1)+i
+   faces.extend(((a,a+1,a+nx+1),(a+1,a+nx+2,a+nx+1)))
+ mesh=bpy.data.meshes.new(name+' woven cloth mesh')
+ mesh.from_pydata(verts,[],faces);mesh.update()
+ obj=bpy.data.objects.new(name,mesh);scene.collection.objects.link(obj)
+ own(obj,CUSHION)
+ for f in obj.data.polygons:f.use_smooth=True
+ solid=obj.modifiers.new('cloth thickness','SOLIDIFY');solid.thickness=.006
+ return obj
+for obj in list(opaque):
+ if obj.name.startswith('curtain pleat'):
+  opaque.remove(obj);bpy.data.objects.remove(obj,do_unlink=True)
+linen_curtain('Full-height left window curtain',-6.80,.70,-6.60)
+linen_curtain('Soft pleated central drape',.20,.69,-6.62)
+# Refined rosette profile below the cornice. This adds scale cues that the
+# previous three bare rectangular strips could not provide.
+for z in (-6.72,6.72):
+ for i in range(66):
+  x=-6.55+i*.201
+  ball('hand-finished cornice bead',P(x,4.04,z),.026,TRIM)
+for x in (-6.72,6.72):
+ for i in range(66):
+  z=-6.55+i*.201
+  ball('hand-finished side cornice bead',P(x,4.04,z),.026,TRIM)
+# Wrought iron scrollwork to evoke the balcony in the source photograph.
+def wrought_scroll(name,cx,cy,height=.50,turns=1.15):
+ steps=25
+ points=[]
+ for k in range(steps):
+  t=k/(steps-1)
+  a=2*pi*turns*t
+  rr=(1-t)*.18+.015
+  points.append(P(cx+rr*cos(a),cy+rr*sin(a),-7.56))
+ for i in range(steps-1):
+  rod(name,points[i],points[i+1],.012,BLACK)
+for j in range(23):
+ wrought_scroll('balcony artisan spiral',-6.55+j*.39,.53)
 
 # A beautiful warm-bounce lighting rig optimized for a fixed residential time of day.
-light('golden-hour sun','SUN',(-16,-33,33),(1,.66,.4),2.5)
+daylight=light('golden-hour sun','SUN',P(-28,25,-34),(1,.76,.54),3.2)
+# Blender Sun location alone does not control direction: aim it through glass.
+daylight.rotation_euler=(Vector(P(1,1,1))-Vector(P(-28,25,-34))).to_track_quat('-Z','Y').to_euler()
 light('sun-lit window fill','AREA',(-5,-5,3.0),(1,.71,.48),720,8.0)
 light('warm back-wall bounce','AREA',(4,1.4,4.1),(1,.88,.73),430,5.5)
 light('soft apartment ambient','AREA',(-2,3.7,3.2),(1,.90,.80),510,7.0)
@@ -422,8 +550,8 @@ for x,h in ((2.55,3.34),(3.0,2.88),(3.45,2.42)):
  light('pendant illumination','POINT',P(x,h,.36),(1,.78,.57),42)
 camd=bpy.data.cameras.new('delivery camera')
 camera=bpy.data.objects.new('delivery camera',camd);scene.collection.objects.link(camera)
-camera.location=P(0,1.7,5.1)
-target=Vector(P(-1.4,1.7,-2.5))
+camera.location=P(1.1,1.68,5.35)
+target=Vector(P(-1.0,1.56,-5.2))
 camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler()
 camd.lens=24;scene.camera=camera
 # Save editable Blender source for future architectural revisions.
