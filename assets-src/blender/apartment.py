@@ -55,6 +55,9 @@ OLIVE=material('olive leaves',(.23,.31,.17),.90)
 FLOWER=material('hydrangea petals',(.86,.78,.65),.87)
 GLASS=material('window glass',(.65,.76,.81),.09)
 GLASS.blend_method='BLEND'
+GLASS.node_tree.nodes.get('Principled BSDF').inputs['Alpha'].default_value=.10
+if 'Transmission Weight' in GLASS.node_tree.nodes.get('Principled BSDF').inputs:
+ GLASS.node_tree.nodes.get('Principled BSDF').inputs['Transmission Weight'].default_value=.80
 
 # Physically based material maps. UVs belong to each mesh, not an indiscriminate
 # joined atlas. Embedded GLB PNG images preserve stable colours and textures.
@@ -104,7 +107,7 @@ def apply_texture(mat,name,size=768):
  if name=='oak':rgb[seam]=np.array([.28,.20,.15])
  rgba=np.concatenate([rgb,np.ones((size,size,1),dtype=np.float32)],axis=2)
  image=bpy.data.images.new('Archviz '+name,width=size,height=size,alpha=True,float_buffer=False)
- image.pixels.foreach_set(rgba.ravel().tolist())
+ image.pixels.foreach_set(rgba.ravel())
  image.filepath_raw=os.path.join(OUT,'texture-'+name+'.png')
  image.file_format='PNG';image.save()
  tex=mat.node_tree.nodes.new('ShaderNodeTexImage')
