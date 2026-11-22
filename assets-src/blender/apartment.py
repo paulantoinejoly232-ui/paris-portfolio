@@ -341,4 +341,13 @@ for obj in opaque+transparent:
  except ReferenceError:pass
 # Export the original objects with their individual material textures.
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'apartment.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_animations=False)
-print('PBR asset ready:',os.path.join(OUT,'apartment.glb'))
+# Render a quick real Cycles review frame from the same door-facing camera.
+# This is used for visual QA and has no impact on browser runtime.
+scene.render.engine='CYCLES'
+scene.cycles.samples=20
+scene.render.resolution_percentage=68
+scene.render.image_settings.file_format='JPEG'
+scene.render.image_settings.quality=87
+scene.render.filepath=os.path.join(OUT,'apartment-review.jpg')
+bpy.ops.render.render(write_still=True)
+print('PBR asset and review ready:',os.path.join(OUT,'apartment.glb'))
