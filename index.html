@@ -27,6 +27,7 @@ body.playing #crosshair{opacity:1}
 #guide{position:absolute;bottom:28px;left:clamp(20px,4vw,65px);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#fff9;text-shadow:0 1px 6px #0008;line-height:2}
 .key{display:inline-block;min-width:23px;text-align:center;border:1px solid #fff6;border-radius:3px;padding:0 5px;margin-right:3px;color:#fff}
 #status{position:absolute;bottom:33px;right:clamp(20px,4vw,65px);font-size:10px;letter-spacing:.22em;text-transform:uppercase;text-shadow:0 1px 8px #000b}
+#asset-progress{position:absolute;right:clamp(20px,4vw,65px);bottom:52px;font-size:9px;letter-spacing:.14em;text-transform:uppercase;opacity:.7;text-shadow:0 1px 6px #0009}
 #status:before{content:"";display:inline-block;background:#d8ba8a;width:6px;height:6px;border-radius:50%;margin-right:9px;vertical-align:middle}
 .hotspot{position:absolute;pointer-events:auto;transform:translate(-50%,-50%);border:1px solid #fff9;background:rgba(17,14,11,.58);box-shadow:0 6px 25px #0005;backdrop-filter:blur(9px);color:white;border-radius:30px;padding:9px 14px;display:none;align-items:center;gap:8px;white-space:nowrap;letter-spacing:.07em;font-size:11px}
 .hotspot:before{content:"+";display:grid;place-items:center;border:1px solid #fff8;width:15px;height:15px;border-radius:50%;font-size:12px}
@@ -70,13 +71,15 @@ h1 em{font-weight:400;color:#e9c597}
 <div id="vignette"></div>
 <div id="loading"><span>The Apartment</span><small>Preparing your visit</small></div>
 <header id="top"><a href="#" class="brand" id="home">Paul-Antoine Joly<span>An interactive portrait</span></a><nav><button data-page="story">Story</button><button data-page="microsoft">Work</button><button data-page="projects">Projects</button><button data-page="contact">Contact</button></nav></header>
-<div id="hud"><div id="crosshair"></div><div id="floorname">Paris · 7th arrondissement · The apartment</div><div id="guide"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> Walk &nbsp; · &nbsp; Mouse Look &nbsp; · &nbsp; <span class="key">E</span> Explore &nbsp; · &nbsp; <span class="key">Esc</span> Release mouse</div><div id="status">Paris · Golden hour</div><div id="hint"></div></div>
+<div id="hud"><div id="crosshair"></div><div id="floorname">Paris · 7th arrondissement · The apartment</div><div id="guide"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> Walk &nbsp; · &nbsp; Mouse Look &nbsp; · &nbsp; <span class="key">E</span> Explore &nbsp; · &nbsp; <span class="key">Esc</span> Release mouse</div><div id="status">Paris · Golden hour</div><div id="asset-progress" aria-live="polite">LOADING STUDIO MATERIALS</div><div id="hint"></div></div>
 <div id="mobile"><button class="up" data-move="w" aria-label="Forward">↑</button><button class="left" data-move="a" aria-label="Left">←</button><button class="down" data-move="s" aria-label="Backward">↓</button><button class="right" data-move="d" aria-label="Right">→</button></div>
 <div id="intro"><div class="inner"><p class="eyebrow">An invitation · Paris, France</p><h1>Welcome to<br><em>my world.</em></h1><p class="desc">I'm Paul-Antoine. Step inside, wander around and discover the people, places and ideas that have shaped my story. Make yourself at home.</p><button id="enter" class="primary">Enter the apartment ↗</button><span class="smalltext">An interactive portfolio · Use WASD to move</span></div></div>
 <aside id="panel" aria-label="Portfolio details"><button class="close" id="close" aria-label="Close details">×</button><div class="small" id="panel-kicker"></div><h2 id="panel-title"></h2><p id="panel-body"></p><div class="tags" id="panel-tags"></div><div class="rule"></div><div id="panel-link"></div></aside>
 <script type="module">
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const $ = s => document.querySelector(s);
 const canvas = $('#world');
@@ -93,9 +96,15 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.55;
+renderer.toneMappingExposure=1.24;
+renderer.physicallyCorrectLights=true;
 
 const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+const env = pmrem.fromScene(new RoomEnvironment(renderer),.04);
+scene.environment = env.texture;
+scene.environmentIntensity=.32;
+pmrem.dispose();
 const camera = new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.07,750);
 const MAT = (c,rough=.75,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});
 const cream=MAT(0xe8d9bf), plaster=MAT(0xf7ebdb), walnut=MAT(0x36251b,.48), oak=MAT(0xa67b55,.55), ivory=MAT(0xf6e8d2), velvet=MAT(0x8b8073,.94), soft=MAT(0xb9a797,.98), dark=MAT(0x241e1b,.42), gold=MAT(0xc89b57,.23,.72), brass=MAT(0xe6c88a,.24,.75), blackMetal=MAT(0x25221f,.36,.6), glass=new THREE.MeshPhysicalMaterial({color:0xcde1e1,metalness:0,roughness:.08,transparent:true,opacity:.17,depthWrite:false,side:THREE.DoubleSide});
@@ -145,7 +154,7 @@ function floorTexture(){
  }
  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(2,2);t.anisotropy=8;return t;
 }
-const woodFloor=new THREE.MeshStandardMaterial({map:floorTexture(),roughness:.43});
+const woodFloor=new THREE.MeshStandardMaterial({map:floorTexture(),roughness:.32,metalness:0,envMapIntensity:.72});
 box(14,.22,14,woodFloor,0,-.15,0);
 box(14,.18,14,ceilingMat,0,4.46,0);
 box(.22,4.4,14,cream,-7,2.2,0);box(.22,4.4,14,cream,7,2.2,0);box(14,4.4,.22,cream,0,2.2,7);
@@ -241,6 +250,7 @@ for(let i=0;i<16;i++){const ang=2*Math.PI*i/16;tr([Math.cos(ang)*1.15,45,Math.si
 // Soft fabrics and upholstery, lounge left.
 const rug=box(5.45,.045,3.95,rugMat,-3.62,.013,.55,.02);
 const sofa=new THREE.Group();sofa.position.set(-5.74,0,1.78);scene.add(sofa);
+const armchairFallbacks=[];const diningFallbacks=[];
 box(2.2,.5,.95,soft,0,.53,0,.19,sofa);
 box(2.18,.7,.22,soft,0,.89,.48,.10,sofa);
 box(.22,.43,1,soft,-1,.66,0,.08,sofa);
@@ -253,6 +263,7 @@ function armchair(x,z,a){
  box(1.13,.70,.22,soft,0,.91,.38,.09,group);
  for(const side of [-1,1])box(.24,.41,.92,soft,side*.46,.72,-.01,.1,group);
  box(.5,.12,.4,velvet,0,.90,.24,.055,group);
+ armchairFallbacks.push(group);
  for(const [lx,lz] of [[-.39,-.3],[.39,-.3],[-.39,.33],[.39,.33]])box(.07,.18,.07,walnut,lx,.14,lz,.02,group);
 }
 armchair(-3.25,-.92,.23);armchair(-1.65,-1.02,-.2);
@@ -261,8 +272,10 @@ function lowTable(x,z,r,height){
  cyl(r,r,.065,stone,x,height,z);
 }
 lowTable(-3.55,1.14,.68,.39);
+const coffeeFallbackIndex=scene.children.length;
 box(1.4,.24,.85,walnut,-3.16,.30,-.02,.02);
 box(1.48,.06,.91,stone,-3.16,.47,-.02,.01);
+const coffeeFallback=scene.children.slice(coffeeFallbackIndex);
 // Decorative glass flower vase and stems
 const vaseGlass=new THREE.MeshPhysicalMaterial({color:0xcde6dc,roughness:.16,metalness:.03,transparent:true,opacity:.66,depthWrite:false});
 cyl(.11,.14,.31,vaseGlass,-3.12,.68,-.02);
@@ -279,12 +292,15 @@ cyl(.32,.32,.45,dark,-6.13,.25,3.14);cyl(.4,.4,.036,stone,-6.13,.48,3.14);
 sphere(.16,brass,-6.13,.7,3.14);
 
 // Dining table, chair silhouettes and laptop.
+const tableFallbackIndex=scene.children.length;
 cyl(.12,.21,.76,walnut,1.32,.38,-3.65);
 cyl(1.12,1.12,.07,walnut,1.32,.77,-3.65);
+const diningTableFallback=scene.children.slice(tableFallbackIndex);
 function diningChair(x,z,rot){
  const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);
  box(.5,.09,.51,dark,0,.49,0,.05,g);
  box(.52,.65,.10,dark,0,.87,.22,.06,g);
+ diningFallbacks.push(g);
  for(const xx of [-.18,.18])for(const zz of [-.18,.18])box(.045,.46,.046,blackMetal,xx,.23,zz,0,g);
 }
 diningChair(.1,-3.7,-1.3);diningChair(2.6,-3.7,1.35);diningChair(1.55,-4.9,0);
@@ -351,6 +367,135 @@ const workFolio=box(.37,.025,.25,walnut,3.0,1.13,1.1,.004);
 const travelCase=box(.43,.76,.26,walnut,-6.5,.4,4.78,.045);
 box(.45,.03,.032,brass,-6.5,.78,4.78);
 const notebook=box(.30,.026,.26,ivory,-3.45,.62,.20,.01);
+
+
+// --- Studio-quality furniture & scanned PBR materials (CC0, Poly Haven) ---
+// Models stream directly from the free public Poly Haven CDN;
+// if an asset is unavailable, the walkable fallback furniture remains.
+const realAssetStatus={loaded:0,failed:0};
+const gltfLoader=new GLTFLoader();
+const textureLoader=new THREE.TextureLoader();
+const phCache=new Map();
+async function phFiles(id){
+ if(phCache.has(id))return phCache.get(id);
+ const task=fetch('https://api.polyhaven.com/files/'+encodeURIComponent(id))
+  .then(response=>{if(!response.ok)throw new Error('Asset metadata '+id);return response.json()});
+ phCache.set(id,task);
+ return task;
+}
+function resolveVariant(files,group,format='jpg'){
+ const item=files[group];
+ if(!item)return null;
+ for(const size of ['2k','1k']){
+  const variants=item[size]||{};
+  if(variants[format]?.url)return variants[format].url;
+  if(variants.png?.url)return variants.png.url;
+  if(variants.jpg?.url)return variants.jpg.url;
+ }
+ return null;
+}
+async function applySurface(id,material,repeatX,repeatY,normalStrength=.35){
+ try{
+  const files=await phFiles(id);
+  const diffuse=resolveVariant(files,'Diffuse');
+  if(!diffuse)return;
+  const tex=await new Promise((res,rej)=>textureLoader.load(diffuse,res,undefined,rej));
+  for(const texture of [tex]){texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(repeatX,repeatY);texture.anisotropy=renderer.capabilities.getMaxAnisotropy()}
+  tex.colorSpace=THREE.SRGBColorSpace; material.map=tex;
+  const nor=resolveVariant(files,'nor_gl');
+  if(nor){
+   textureLoader.load(nor,t=>{
+    t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeatX,repeatY);
+    t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+    material.normalMap=t;material.normalScale.set(normalStrength,normalStrength);material.needsUpdate=true
+   });
+  }
+  const rough=resolveVariant(files,'Rough');
+  if(rough){
+   textureLoader.load(rough,t=>{
+    t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeatX,repeatY);material.roughnessMap=t;material.needsUpdate=true
+   });
+  }
+  material.needsUpdate=true;
+ }catch(err){console.info('Keeping built-in material',id,err)}
+}
+applySurface('herringbone_parquet',woodFloor,3.3,3.3,.22);
+applySurface('marble_01',stone,1,1,.18);
+applySurface('fabric_pattern_05',soft,1.2,.9,.21);
+applySurface('fabric_pattern_05',velvet,1,1,.2);
+
+async function polyModel(id){
+ const files=await phFiles(id);
+ const variants=files.gltf||files.glTF||{};
+ const entry=variants['1k']?.gltf||variants['2k']?.gltf;
+ if(!entry?.url)throw new Error('No compatible glTF variant for '+id);
+ return new Promise((resolve,reject)=>gltfLoader.load(entry.url,g=>resolve(g.scene),undefined,reject));
+}
+const modelPromises=new Map();
+function modelOnce(id){
+ if(!modelPromises.has(id))modelPromises.set(id,polyModel(id));
+ return modelPromises.get(id);
+}
+async function replaceFurniture(id,{x,y=0,z,width,angle=0,fallback=[],orient}){
+ try{
+  const asset=(await modelOnce(id)).clone(true);
+  asset.rotation.y=angle;
+  asset.traverse(child=>{
+   if(child.isMesh){
+    child.castShadow=true;child.receiveShadow=true;child.frustumCulled=true;
+    if(child.material?.isMeshStandardMaterial){child.material.envMapIntensity=.8}
+   }
+  });
+  scene.add(asset);
+  asset.updateMatrixWorld(true);
+  let bounds=new THREE.Box3().setFromObject(asset);
+  const length=bounds.max.x-bounds.min.x;
+  const depth=bounds.max.z-bounds.min.z;
+  const scale=width/Math.max(orient==='depth'?depth:length,.01);
+  asset.scale.multiplyScalar(scale);
+  asset.updateMatrixWorld(true);
+  bounds=new THREE.Box3().setFromObject(asset);
+  asset.position.set(x-(bounds.min.x+bounds.max.x)/2,y-bounds.min.y,z-(bounds.min.z+bounds.max.z)/2);
+  for(const object of fallback)object.visible=false;
+  realAssetStatus.loaded++;
+  $('#asset-progress').textContent='REAL MATERIALS · '+realAssetStatus.loaded+' OBJECTS';
+ }catch(err){
+  realAssetStatus.failed++;
+  console.info('Retaining fallback object',id,err);
+ }
+}
+// The default camera remains usable while the richer assets stream in.
+const modelsToLoad=[
+ replaceFurniture('modern_arm_chair_01',{x:-3.25,z:-.92,width:1.1,angle:.23,fallback:[armchairFallbacks[0]]}),
+ replaceFurniture('modern_arm_chair_01',{x:-1.65,z:-1.02,width:1.1,angle:-.2,fallback:[armchairFallbacks[1]]}),
+ replaceFurniture('modern_coffee_table_01',{x:-3.16,z:-.02,width:1.42,angle:Math.PI/2,fallback:coffeeFallback}),
+ replaceFurniture('round_wooden_table_01',{x:1.32,z:-3.65,width:2.10,fallback:diningTableFallback}),
+ replaceFurniture('dining_chair_02',{x:.1,z:-3.7,width:.54,angle:-1.3,fallback:[diningFallbacks[0]]}),
+ replaceFurniture('dining_chair_02',{x:2.6,z:-3.7,width:.54,angle:1.35,fallback:[diningFallbacks[1]]}),
+ replaceFurniture('dining_chair_02',{x:1.55,z:-4.9,width:.54,fallback:[diningFallbacks[2]]})
+];
+Promise.allSettled(modelsToLoad).then(()=>$('#asset-progress').textContent=realAssetStatus.loaded+' SCANNED MODELS · '+(realAssetStatus.failed?'FALLBACKS ACTIVE':'READY'));
+
+// Physical detail upgrade: recessed shadow-gaps, fine wall panel trim, brass plates.
+const skirting=MAT(0xe8dfcf,.82),shadowGap=MAT(0x6e5a44,.8);
+for(const z of [-6.75,6.74]){
+ box(13.8,.18,.07,skirting,0,.1,z);
+ box(13.8,.017,.076,shadowGap,0,.22,z);
+}
+for(const x of [-6.74,6.74]){
+ box(.07,.18,13.8,skirting,x,.1,0);
+ box(.078,.017,13.8,shadowGap,x,.22,0);
+}
+for(const [wx,wz] of [[-6.62,3.0],[-6.62,5.25],[6.62,3.2]]){
+ box(.043,2.3,1.40,plaster,wx,2.13,wz);
+ box(.052,2.33,.025,shadowGap,wx,2.12,wz-.7);
+ box(.052,2.33,.025,shadowGap,wx,2.12,wz+.7);
+}
+// Anisotropic-looking light bounces with a few broad fill lights.
+const bounce=new THREE.PointLight(0xffd1a0,3.3,10,2);
+bounce.position.set(-4.3,2.25,-5.2);scene.add(bounce);
+const fill=new THREE.PointLight(0xffe7c7,1.7,7,2);
+fill.position.set(2.6,3.2,1.1);scene.add(fill);
 
 // Content is deliberately editable in one place.
 const pages={
