@@ -1,6 +1,6 @@
 # Paul-Antoine Joly · The Apartment
 
-A free-to-host, first-person Paris apartment portfolio. Built as an original project in **React + Vite + React Three Fiber** with a **Blender/Cycles baked-geometry pipeline**. Inspired by the craftsmanship and baking process discussed in the public *Ekko656/portfolio-3d* project; **no files or assets from that repository are copied**.
+A free-to-host, first-person Paris apartment portfolio. Built as an original project in **React + Vite + React Three Fiber** with a **Blender-generated PBR materials and 3D geometry pipeline**. Inspired by the craftsmanship and baking process discussed in the public *Ekko656/portfolio-3d* project; **no files or assets from that repository are copied**.
 
 ## What visitors can do
 - Explore the apartment using **W A S D** (Shift to walk faster); move the mouse to look.
@@ -24,7 +24,7 @@ npm run dev
 ### Produce the Blender scene
 Install [Blender](https://www.blender.org/) (free), then from the repository root:
 \`\`\`bash
-blender --background --python assets-src/blender/apartment.py -- --bake
+blender --background --python assets-src/blender/apartment.py
 \`\`\`
 This creates the GLB asset loaded by the site and an editable \`assets-src/blender/apartment-source.blend\`. Blender requires memory and CPU time for baking; **deploys on Vercel need no GPU**.
 
