@@ -1,8 +1,11 @@
 """Original Paris apartment asset generator.
-Free toolchain: Blender (Cycles bake) -> glTF/GLB -> Vite + React Three Fiber.
-Run: blender --background --python assets-src/blender/apartment.py -- --bake
-This creates public/models/apartment.glb and a baked-lightmap PNG beside it.
-No third-party portfolio's source, models, or textures are copied.
+Free toolchain: Blender -> textured PBR GLB -> Vite + React Three Fiber.
+Run: blender --background --python assets-src/blender/apartment.py
+This exports public/models/apartment.glb with distinct tiled material maps.
+The earlier 2K shared Cycles lightmap corrupted all visible surfaces and is
+intentionally NOT applied to the 3D model. This edition prioritizes correct
+physical materials and normal realtime lighting over noisy light baking.
+No other creator's source or models are copied.
 """
 import bpy, math, os, sys, random
 from mathutils import Vector
@@ -11,7 +14,7 @@ random.seed(27)
 ROOT=os.path.abspath(os.path.join(os.path.dirname(__file__),'..','..'))
 OUT=os.path.join(ROOT,'public','models')
 os.makedirs(OUT,exist_ok=True)
-BAKE='--bake' in sys.argv
+BAKE=False  # Do not apply low-resolution global bake to material base colours
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
 for data in bpy.data.materials: bpy.data.materials.remove(data)
@@ -38,20 +41,84 @@ def material(name,color,roughness=.8,metal=0,fabric=False):
   bump=nt.nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.17;bump.inputs['Distance'].default_value=.006
   nt.links.new(noise.outputs['Fac'],bump.inputs['Height']);nt.links.new(bump.outputs['Normal'],bs.inputs['Normal'])
  return m
-PLASTER=material('warm plaster',(.82,.75,.65),.85,0,True)
+PLASTER=material('warm plaster',(.89,.83,.76),.86,0,False)
 TRIM=material('painted Parisian cornice',(.95,.87,.77),.73)
-FLOOR=material('oak herringbone',(.37,.18,.08),.44,0,True)
-FABRIC=material('textured chenille sofa',(.49,.42,.36),.93,0,True)
+FLOOR=material('oak herringbone',(.66,.44,.28),.40,0,False)
+FABRIC=material('textured chenille sofa',(.57,.52,.47),.94,0,False)
 CUSHION=material('linen cushions',(.64,.54,.46),.91,0,True)
 RUG=material('wool rug',(.46,.40,.35),.98,0,True)
-DARKWOOD=material('dark walnut',(.16,.095,.065),.43,0,True)
-MARBLE=material('ivory marble',(.81,.75,.66),.24,0,True)
+DARKWOOD=material('dark walnut',(.24,.16,.11),.43,0,False)
+MARBLE=material('ivory marble',(.89,.86,.81),.23,0,False)
 BLACK=material('blackened steel',(.045,.037,.031),.28,.5)
 BRASS=material('brushed brass',(.63,.39,.14),.19,.76)
 OLIVE=material('olive leaves',(.23,.31,.17),.90)
 FLOWER=material('hydrangea petals',(.86,.78,.65),.87)
 GLASS=material('window glass',(.65,.76,.81),.09)
 GLASS.blend_method='BLEND'
+
+# Physically based material maps. UVs belong to each mesh, not an indiscriminate
+# joined atlas. Embedded GLB PNG images preserve stable colours and textures.
+def apply_texture(mat,name,size=768):
+ import numpy as np
+ y,x=np.indices((size,size),dtype=np.float32)
+ rng=np.random.default_rng({'oak':11,'walnut':21,'marble':31,'linen':41,'rug':51,'plaster':61}[name])
+ noise=rng.normal(0,1,(size,size)).astype(np.float32)
+ f=noise*.012
+ if name=='oak':
+  a=(x+y)*.70710678;b=(y-x)*.70710678
+  flip=(np.floor(a/124)+np.floor(b/124))%2
+  u=np.where(flip>0,b,a);v=np.where(flip>0,a,b)
+  board=np.floor(v/94)
+  grain=np.sin(u*.12+np.sin(v*.065)*1.2)*.018 + np.sin(u*.58)*.007
+  shade=(np.sin(board*29.42)*.5+np.sin(board*11.9)*.5)*.045
+  seam=np.minimum(np.mod(v,94),94-np.mod(v,94))<1.5
+  seam|=np.minimum(np.mod(u,260),260-np.mod(u,260))<1.8
+  base=np.array([.68,.48,.32],dtype=np.float32)
+  val=grain+shade+f
+ elif name=='walnut':
+  grain=np.sin(x*.08+np.sin(y*.024)*1.4)*.024+np.sin(x*.37+np.sin(y*.11)*.9)*.009
+  base=np.array([.25,.17,.115],dtype=np.float32)
+  val=grain+f*.38
+  seam=np.zeros((size,size),dtype=bool)
+ elif name=='marble':
+  vein=np.sin(x*.019+y*.008+np.sin(y*.022)*2.1+np.sin(x*.007)*1.8)
+  vein+=np.sin(x*.084+y*.12)*.19
+  fine=np.power(np.maximum(0,vein-.80),8)*.22
+  base=np.array([.89,.85,.78],dtype=np.float32)
+  val=-fine+f*.28
+  seam=np.zeros((size,size),dtype=bool)
+ elif name=='linen':
+  weave=(np.sin(x*1.1)*np.cos(y*1.27))*.019
+  base=np.array([.65,.58,.52],dtype=np.float32)
+  val=weave+f*.7
+  seam=np.zeros((size,size),dtype=bool)
+ elif name=='rug':
+  base=np.array([.63,.56,.49],dtype=np.float32)
+  val=f*2.3
+  seam=np.zeros((size,size),dtype=bool)
+ else:
+  base=np.array([.89,.83,.77],dtype=np.float32)
+  val=f*.19
+  seam=np.zeros((size,size),dtype=bool)
+ rgb=np.clip(base[None,None,:]+val[:,:,None],0,1)
+ if name=='oak':rgb[seam]=np.array([.28,.20,.15])
+ rgba=np.concatenate([rgb,np.ones((size,size,1),dtype=np.float32)],axis=2)
+ image=bpy.data.images.new('Archviz '+name,width=size,height=size,alpha=True,float_buffer=False)
+ image.pixels.foreach_set(rgba.ravel().tolist())
+ image.filepath_raw=os.path.join(OUT,'texture-'+name+'.png')
+ image.file_format='PNG';image.save()
+ tex=mat.node_tree.nodes.new('ShaderNodeTexImage')
+ tex.image=image;tex.interpolation='Linear'
+ mat.node_tree.links.new(tex.outputs['Color'],mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+ return image
+
+for mat,name,size in [
+ (FLOOR,'oak',2048),(DARKWOOD,'walnut',1024),
+ (MARBLE,'marble',1024),(FABRIC,'linen',768),
+ (CUSHION,'linen',768),(RUG,'rug',768),(PLASTER,'plaster',768)
+]:
+ apply_texture(mat,name,size)
+
 def own(obj,mat,trans=False):
  obj.data.materials.append(mat)
  (transparent if trans else opaque).append(obj)
@@ -95,7 +162,7 @@ def light(name,typ,loc,color,power,size=None):
 
 # Apartment architecture: metres, Y is horizontal depth in Blender, Z vertical.
 # Three.js frontend uses Y vertical, negative Z towards the Paris window.
-def P(x,height,z):return (x,z,height)
+def P(x,height,z):return (x,-z,height)
 cube('Solid herringbone oak floor',P(0,-.15,0),(14,14,.25),FLOOR)
 cube('Warm plaster ceiling',P(0,4.47,0),(14,14,.24),TRIM)
 cube('Left apartment wall',P(-6.98,2.2,0),(.2,14,4.4),PLASTER)
@@ -225,6 +292,28 @@ for px,py in ((-6.35,-6.1),(.38,-6.15)):
 cube('personal travel case',P(-6.5,.39,4.7),(.46,.31,.73),DARKWOOD,.048)
 cube('brass suitcase latch',P(-6.5,.72,4.7),(.32,.08,.035),BRASS,.009)
 
+
+# Joinery details: every cupboard gets a deliberate inset and a gold accent.
+for x in (3.65,4.55,5.45,6.35):
+ cube('walnut cabinetry join',P(x,3.25,-.93),(.013,.015,1.54),BLACK,.003)
+ cube('under counter cabinet reveal',P(x,.82,-.93),(.012,.017,1.51),BLACK,.002)
+ cube('island front reveal',P(x,.58,1.88),(.013,.012,.78),BLACK,.002)
+for x in (4.05,4.90,5.75,6.60):
+ cube('fine brass cabinet pull',P(x,3.18,-.962),(.21,.024,.025),BRASS,.007)
+# Dining place settings, dishware and objects create scale cues.
+for x,y in ((.30,-3.60),(2.22,-3.60),(1.2,-4.31)):
+ column('ceramic plate at dining table',P(x,.83,y),.20,.013,MARBLE,32)
+ column('porcelain cup',P(x+.16,.90,y-.15),.046,.115,TRIM,22)
+# Add edge strips to the kitchen island; the empty box looked like cabinetry.
+cube('island plinth shadow line',P(3.63,.085,1.17),(3.5,1.33,.055),BLACK,.005)
+cube('island plinth inset',P(3.63,.055,1.17),(3.35,1.19,.05),DARKWOOD,.006)
+# A folded throw and additional linen upholstery folds.
+cube('sofa throw',P(-6.08,.90,2.04),(.55,.76,.035),CUSHION,.02)
+# Recessed wall-panels; subtle architectural relief.
+for z in (3.2,5.1):
+ cube('wall field frame',P(-6.82,2.1,z),(.05,1.36,2.8),TRIM,.014)
+ cube('wall field inset',P(-6.78,2.1,z),(.012,1.27,2.61),PLASTER,.002)
+
 # A beautiful warm-bounce lighting rig optimized for a fixed residential time of day.
 light('golden-hour sun','SUN',(-16,-33,33),(1,.66,.4),2.5)
 light('sun-lit window fill','AREA',(-5,-5,3.0),(1,.71,.48),720,8.0)
@@ -240,44 +329,13 @@ camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler(
 camd.lens=24;scene.camera=camera
 # Save editable Blender source for future architectural revisions.
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT,'assets-src','blender','apartment-source.blend'))
-# Lightmap export: combine static opaque geometry to give one coherent UV atlas.
-if BAKE:
- bpy.ops.object.select_all(action='DESELECT')
- for obj in opaque:obj.select_set(True)
- bpy.context.view_layer.objects.active=opaque[0]
- bpy.ops.object.join()
- joined=bpy.context.object;joined.name='BAKED_ARCHITECTURAL_INTERIOR'
- bpy.ops.object.mode_set(mode='EDIT')
- bpy.ops.mesh.select_all(action='SELECT')
- bpy.ops.uv.smart_project(island_margin=.008)
- bpy.ops.object.mode_set(mode='OBJECT')
- img=bpy.data.images.new('Apartment Cycles Combined Lightmap',width=2048,height=2048,alpha=False)
- for mat in joined.data.materials:
-  if not mat:continue
-  nt=mat.node_tree
-  node=nt.nodes.new('ShaderNodeTexImage');node.name='Lightmap Bake Target';node.image=img;nt.nodes.active=node
- bpy.ops.object.select_all(action='DESELECT');joined.select_set(True);bpy.context.view_layer.objects.active=joined
- scene.render.bake.use_pass_direct=True
- scene.render.bake.use_pass_indirect=True
- scene.render.bake.use_pass_color=True
- scene.cycles.samples=24
- bpy.ops.object.bake(type='COMBINED',margin=6)
- img.filepath_raw=os.path.join(OUT,'apartment-lightmap.png')
- img.file_format='PNG';img.save()
- for mat in joined.data.materials:
-  if not mat:continue
-  nt=mat.node_tree;nt.nodes.clear()
-  out=nt.nodes.new('ShaderNodeOutputMaterial')
-  emissive=nt.nodes.new('ShaderNodeEmission')
-  tex=nt.nodes.new('ShaderNodeTexImage')
-  tex.image=img;tex.interpolation='Linear'
-  nt.links.new(tex.outputs['Color'],emissive.inputs['Color'])
-  nt.links.new(emissive.outputs['Emission'],out.inputs['Surface'])
+# Do not combine all materials into an emissive lightmap: this caused the
+# screenshot's splotchy, uniformly brown scene. Keep PBR materials separate.
 # The GLB is the artifact loaded by React Three Fiber; no server-side GPU charges.
 bpy.ops.object.select_all(action='DESELECT')
 for obj in opaque+transparent:
  try:obj.select_set(True)
  except ReferenceError:pass
-if BAKE:joined.select_set(True)
+# Export the original objects with their individual material textures.
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'apartment.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_animations=False)
-print('Asset ready:',os.path.join(OUT,'apartment.glb'),'baked',BAKE)
+print('PBR asset ready:',os.path.join(OUT,'apartment.glb'))
