@@ -49,12 +49,14 @@ function Controls({active,blockedByPanel,held,onNearby,mobile}){
   };
   const down=e=>{if(e.pointerType==='touch'||mobile){prev.current=[e.clientX,e.clientY]}};
   const up=()=>{prev.current=null};
+  const touchMove=e=>{if(e.pointerType==='touch')move(e)};
   const canvas=gl.domElement;
   document.addEventListener('mousemove',move);
+  canvas.addEventListener('pointermove',touchMove);
   canvas.addEventListener('pointerdown',down);
   document.addEventListener('pointerup',up);
   document.addEventListener('pointercancel',up);
-  return()=>{document.removeEventListener('mousemove',move);canvas.removeEventListener('pointerdown',down);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up)};
+  return()=>{document.removeEventListener('mousemove',move);canvas.removeEventListener('pointermove',touchMove);canvas.removeEventListener('pointerdown',down);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up)};
  },[active,blockedByPanel,camera,gl,mobile]);
  useFrame((state,dt)=>{
   camera.rotation.set(pitch.current,yaw.current,0,'YXZ');
@@ -97,7 +99,7 @@ export default function App(){
  const [active,setActive]=useState(false),[loaded,setLoaded]=useState(false),[page,setPage]=useState(null),[near,setNear]=useState(''),[siteMode,setSiteMode]=useState(false);
  const [mobile,setMobile]=useState(false);
  const held=useRef(new Set());
- const canvas=()=>document.querySelector('#canvas');
+ const canvas=()=>document.querySelector('#canvas canvas')||document.querySelector('#canvas');
  useEffect(()=>{
   const q=matchMedia('(pointer:coarse)');
   const update=()=>setMobile(q.matches);update();
@@ -118,6 +120,13 @@ export default function App(){
   document.addEventListener('keydown',keydown);document.addEventListener('keyup',keyup);window.addEventListener('blur',blur);
   return()=>{document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);window.removeEventListener('blur',blur)};
  },[near,active,page,open]);
+ useEffect(()=>{
+  if(!active||mobile||page||siteMode)return;
+  const el=canvas();if(!el)return;
+  const request=()=>{if(document.pointerLockElement!==el)el.requestPointerLock?.()};
+  el.addEventListener('click',request);
+  return()=>el.removeEventListener('click',request);
+ },[active,mobile,page,siteMode]);
  const tapMove=(code,e,pressed)=>{
   e.preventDefault();if(pressed){held.current.add(code);e.currentTarget.setPointerCapture(e.pointerId)}
   else held.current.delete(code);

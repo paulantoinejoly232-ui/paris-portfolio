@@ -59,7 +59,7 @@ def own(obj,mat,trans=False):
 def bevel(obj,r):
  if r<=0:return
  mod=obj.modifiers.new('soft machined edges','BEVEL');mod.width=r;mod.segments=3
- mod.affect='EDGES' if hasattr(mod,'affect') else None
+ if hasattr(mod,'affect'): mod.affect='EDGES'
  bpy.context.view_layer.objects.active=obj
  try:bpy.ops.object.modifier_apply(modifier=mod.name)
  except Exception:pass

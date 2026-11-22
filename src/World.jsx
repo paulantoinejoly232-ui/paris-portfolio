@@ -306,11 +306,14 @@ function ModelOverride({onLoad}){
  useEffect(()=>{
  let mounted=true;
  const loader=new GLTFLoader();
- loader.load('/models/apartment.glb',g=>{
+ fetch('/models/apartment.glb',{method:'HEAD'}).then(response=>{
+  if(!response.ok || (response.headers.get('content-type')||'').includes('html'))return;
+  loader.load('/models/apartment.glb',g=>{
   if(!mounted)return;
   g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
   setModel(g.scene);onLoad(true);
  },undefined,()=>{onLoad(false)});
+ }).catch(()=>{});
  return()=>{mounted=false};
  },[onLoad]);
  return model?<primitive object={model} />:null;
