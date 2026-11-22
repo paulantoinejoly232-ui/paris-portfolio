@@ -30,6 +30,8 @@ console.log('BROWSER CAMERA',JSON.stringify(await page.evaluate(()=>window.__APA
 await page.screenshot({path:'visual-qa/apartment-browser.png',fullPage:false,timeout:90000,animations:'disabled'});
 const sizes=await page.evaluate(()=>({width:innerWidth,height:innerHeight,canvas:!!document.querySelector('canvas'),loaded:window.__APARTMENT_GLB_READY===true,nav:document.querySelectorAll('nav button').length}));
 console.log('PLAYWRIGHT VIEW',JSON.stringify(sizes));
+const resourceInfo=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.includes('/models/apartment.glb')).map(r=>({transferSize:r.transferSize,durationMs:Math.round(r.duration)})));
+console.log('APARTMENT MODEL NETWORK',JSON.stringify(resourceInfo));
 console.log('PLAYWRIGHT BROWSER ERRORS',JSON.stringify(issues.slice(0,15)));
 await browser.close();
 if(!sizes.loaded)process.exitCode=1;
