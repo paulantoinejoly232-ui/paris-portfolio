@@ -8,9 +8,16 @@ page.on('pageerror',e=>errors.push(e.message));
 page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
 await page.goto('http://127.0.0.1:5173/',{waitUntil:'domcontentloaded',timeout:60000});
 await page.locator('.enter').waitFor({state:'visible'});
-await page.waitForFunction(()=>{const b=document.querySelector('button.enter');return b&&!b.disabled},{timeout:65000});
+try{
+ await page.waitForFunction(()=>{const b=document.querySelector('button.enter');return b&&!b.disabled},null,{timeout:60000});
+}catch(e){
+ console.error('Entrance not enabled',JSON.stringify(await page.evaluate(()=>({button:document.querySelector('button.enter')?.outerHTML,root:document.querySelector('#root')?.innerText.slice(0,1200),imageRequests:performance.getEntriesByType('resource').filter(x=>x.name.includes('photo-apartment')).map(x=>({name:x.name,status:x.responseStatus}))}))));
+ console.error('PAGE ERRORS',JSON.stringify(errors));
+ await page.screenshot({path:'visual-qa/photo-depth-debug.png',timeout:90000});
+ throw e;
+}
 await page.locator('button.enter').click({timeout:10000});
-await page.waitForFunction(()=>window.__PHOTO_DEPTH_READY===true,{timeout:65000});
+await page.waitForFunction(()=>window.__PHOTO_DEPTH_READY===true,null,{timeout:65000});
 await page.waitForTimeout(1400);
 await page.screenshot({path:'visual-qa/photo-depth-start.png',timeout:90000,animations:'disabled'});
 const start=await page.evaluate(()=>window.__PHOTO_CAMERA);
