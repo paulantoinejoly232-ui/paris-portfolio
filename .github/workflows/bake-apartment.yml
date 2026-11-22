@@ -23,8 +23,6 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq blender python3-numpy
-      - name: Generate detailed apartment with authentic CC0 scanned oak
-        run: blender -b -t 4 -P assets-src/blender/apartment.py
       - name: Cache Unsplash Eiffel photograph for the outside view
         run: |
           mkdir -p public/assets
@@ -32,6 +30,8 @@ jobs:
             'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?fm=jpg&fit=crop&w=1800&q=84' \
             --output public/assets/paris-eiffel.jpg
           file public/assets/paris-eiffel.jpg
+      - name: Generate detailed apartment with authentic CC0 scanned oak
+        run: blender -b -t 4 -P assets-src/blender/apartment.py
       - name: Upload Blender review screenshot
         uses: actions/upload-artifact@v4
         with:

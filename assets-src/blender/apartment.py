@@ -624,6 +624,30 @@ for obj in opaque+transparent:
  except ReferenceError:pass
 # Export the original objects with their individual material textures.
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'apartment.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_animations=False)
+
+# The render review needs the same Eiffel view as the actual website.
+# Add this plane AFTER glTF export so there is no duplicate photo in WebGL.
+photo=os.path.join(ROOT,'public','assets','paris-eiffel.jpg')
+if os.path.isfile(photo):
+ try:
+  bpy.ops.mesh.primitive_plane_add(size=2,location=P(-4,3,-38))
+  backdrop=bpy.context.object;backdrop.name='QA-only Paris skyline backdrop'
+  backdrop.scale=(30,18,1)
+  backdrop.rotation_euler.x=pi/2
+  m=bpy.data.materials.new('Paris view - review emission only');m.use_nodes=True
+  n=m.node_tree.nodes
+  n.clear()
+  out=n.new('ShaderNodeOutputMaterial');emit=n.new('ShaderNodeEmission')
+  emit.inputs['Strength'].default_value=.9
+  t=n.new('ShaderNodeTexImage')
+  t.image=bpy.data.images.load(photo,check_existing=True)
+  m.node_tree.links.new(t.outputs['Color'],emit.inputs['Color'])
+  m.node_tree.links.new(emit.outputs['Emission'],out.inputs['Surface'])
+  backdrop.data.materials.append(m)
+  print('QA REFERENCE PHOTO INCLUDED',photo)
+ except Exception as err:
+  print('QA exterior photo fallback',repr(err))
+
 # Render a quick real Cycles review frame from the same door-facing camera.
 # This is used for visual QA and has no impact on browser runtime.
 scene.render.engine='CYCLES'
