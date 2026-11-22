@@ -1,0 +1,283 @@
+"""Original Paris apartment asset generator.
+Free toolchain: Blender (Cycles bake) -> glTF/GLB -> Vite + React Three Fiber.
+Run: blender --background --python assets-src/blender/apartment.py -- --bake
+This creates public/models/apartment.glb and a baked-lightmap PNG beside it.
+No third-party portfolio's source, models, or textures are copied.
+"""
+import bpy, math, os, sys, random
+from mathutils import Vector
+from math import pi, sin, cos
+random.seed(27)
+ROOT=os.path.abspath(os.path.join(os.path.dirname(__file__),'..','..'))
+OUT=os.path.join(ROOT,'public','models')
+os.makedirs(OUT,exist_ok=True)
+BAKE='--bake' in sys.argv
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+for data in bpy.data.materials: bpy.data.materials.remove(data)
+scene=bpy.context.scene
+scene.render.engine='CYCLES'
+scene.cycles.samples=24 if BAKE else 16
+scene.render.resolution_x=1200
+scene.render.resolution_y=800
+scene.render.resolution_percentage=100
+scene.world.color=(.58,.48,.38)
+scene.render.image_settings.file_format='PNG'
+scene.view_settings.view_transform='AgX' if 'AgX' in [x.identifier for x in bpy.types.ColorManagedViewSettings.bl_rna.properties['view_transform'].enum_items] else 'Standard'
+# Helpers
+opaque=[]
+transparent=[]
+def material(name,color,roughness=.8,metal=0,fabric=False):
+ m=bpy.data.materials.new(name);m.diffuse_color=(*color,1);m.use_nodes=True
+ nt=m.node_tree;bs=nt.nodes.get('Principled BSDF')
+ bs.inputs['Base Color'].default_value=(*color,1)
+ bs.inputs['Roughness'].default_value=roughness
+ bs.inputs['Metallic'].default_value=metal
+ if fabric:
+  noise=nt.nodes.new('ShaderNodeTexNoise');noise.inputs['Scale'].default_value=330
+  bump=nt.nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.17;bump.inputs['Distance'].default_value=.006
+  nt.links.new(noise.outputs['Fac'],bump.inputs['Height']);nt.links.new(bump.outputs['Normal'],bs.inputs['Normal'])
+ return m
+PLASTER=material('warm plaster',(.82,.75,.65),.85,0,True)
+TRIM=material('painted Parisian cornice',(.95,.87,.77),.73)
+FLOOR=material('oak herringbone',(.37,.18,.08),.44,0,True)
+FABRIC=material('textured chenille sofa',(.49,.42,.36),.93,0,True)
+CUSHION=material('linen cushions',(.64,.54,.46),.91,0,True)
+RUG=material('wool rug',(.46,.40,.35),.98,0,True)
+DARKWOOD=material('dark walnut',(.16,.095,.065),.43,0,True)
+MARBLE=material('ivory marble',(.81,.75,.66),.24,0,True)
+BLACK=material('blackened steel',(.045,.037,.031),.28,.5)
+BRASS=material('brushed brass',(.63,.39,.14),.19,.76)
+OLIVE=material('olive leaves',(.23,.31,.17),.90)
+FLOWER=material('hydrangea petals',(.86,.78,.65),.87)
+GLASS=material('window glass',(.65,.76,.81),.09)
+GLASS.blend_method='BLEND'
+def own(obj,mat,trans=False):
+ obj.data.materials.append(mat)
+ (transparent if trans else opaque).append(obj)
+ return obj
+def bevel(obj,r):
+ if r<=0:return
+ mod=obj.modifiers.new('soft machined edges','BEVEL');mod.width=r;mod.segments=3
+ mod.affect='EDGES' if hasattr(mod,'affect') else None
+ bpy.context.view_layer.objects.active=obj
+ try:bpy.ops.object.modifier_apply(modifier=mod.name)
+ except Exception:pass
+ # weighted normals keep edges clean
+def cube(name,loc,scale,mat,r=.0,trans=False):
+ bpy.ops.mesh.primitive_cube_add(size=1,location=loc);o=bpy.context.object;o.name=name
+ o.dimensions=scale
+ bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+ bevel(o,min(r,min(scale)*.3))
+ return own(o,mat,trans)
+def ball(name,loc,r,mat):
+ bpy.ops.mesh.primitive_uv_sphere_add(segments=18,ring_count=12,radius=r,location=loc)
+ o=bpy.context.object;o.name=name
+ bpy.ops.object.shade_smooth();return own(o,mat)
+def column(name,loc,radius,depth,mat,vertices=20):
+ bpy.ops.mesh.primitive_cylinder_add(vertices=vertices,radius=radius,depth=depth,location=loc)
+ o=bpy.context.object;o.name=name
+ bevel(o,min(.008,radius*.2))
+ return own(o,mat)
+def rod(name,a,b,r,mat):
+ a,b=Vector(a),Vector(b);d=b-a
+ o=column(name,(a+b)*.5,r,d.length,mat,12)
+ o.rotation_euler=d.to_track_quat('Z','Y').to_euler()
+ return o
+def panel(name,x,y,z,w,h,d,mat,r=0):
+ return cube(name,(x,y,z),(w,h,d),mat,r)
+def light(name,typ,loc,color,power,size=None):
+ datab=bpy.data.lights.new(name,typ);datab.energy=power;datab.color=color
+ if size and typ=='AREA':datab.shape='DISK';datab.size=size
+ obj=bpy.data.objects.new(name,datab);scene.collection.objects.link(obj);obj.location=loc
+ if typ=='AREA':obj.rotation_euler=(Vector((0,1,-3))-obj.location).to_track_quat('-Z','Y').to_euler()
+ return obj
+
+# Apartment architecture: metres, Y is horizontal depth in Blender, Z vertical.
+# Three.js frontend uses Y vertical, negative Z towards the Paris window.
+def P(x,height,z):return (x,z,height)
+cube('Solid herringbone oak floor',P(0,-.15,0),(14,14,.25),FLOOR)
+cube('Warm plaster ceiling',P(0,4.47,0),(14,14,.24),TRIM)
+cube('Left apartment wall',P(-6.98,2.2,0),(.2,14,4.4),PLASTER)
+cube('Right apartment wall',P(6.98,2.2,0),(.2,14,4.4),PLASTER)
+cube('Entrance wall',P(0,2.2,7.03),(14,.2,4.4),PLASTER)
+cube('Kitchen-side window wall',P(4.7,2.2,-6.95),(4.6,.2,4.4),PLASTER)
+cube('Window lower sill',P(-2.46,.30,-6.95),(9.15,.20,.60),PLASTER)
+cube('Window upper transom',P(-2.46,4.06,-6.95),(9.15,.20,.68),PLASTER)
+cube('Right lower window band',P(6.91,.30,-4.3),(.2,5,.6),PLASTER)
+cube('Right upper window band',P(6.91,4.07,-4.3),(.2,5,.66),PLASTER)
+
+for y in (4.13,4.23,4.35):
+ for z in (-6.76,6.76):
+  cube('Haussmann cornice front',P(0,y,z),(13.9,.14,.065),TRIM,.018)
+ for x in (-6.76,6.76):
+  cube('Haussmann cornice side',P(x,y,0),(.14,13.9,.065),TRIM,.018)
+for z in (-6.78,6.78):
+ cube('Full-length baseboard',P(0,.12,z),(13.9,.13,.22),TRIM,.013)
+for x in (-6.78,6.78):
+ cube('Side baseboard',P(x,.12,0),(.13,13.9,.22),TRIM,.013)
+cube('Ceiling beam',P(1.42,4.32,0),(.2,14,.16),TRIM)
+cube('Cross beam',P(0,4.32,-2.5),(14,.2,.16),TRIM)
+for i in range(6):
+ x=-6.95+i*1.79
+ cube('French door stile',P(x,2.20,-6.87),(.075,.16,3.42),TRIM,.009)
+ if i<5:
+  cube('French door glazing',P(x+.895,2.19,-6.94),(1.73,.008,3.32),GLASS,trans=True)
+  cube('Window midrail',P(x+.895,2.11,-6.84),(1.70,.09,.045),TRIM,.007)
+  cube('Window upper rail',P(x+.895,3.39,-6.84),(1.70,.09,.045),TRIM,.007)
+  cube('Door handles brushed brass',P(x+.9,1.48,-6.79),(.035,.07,.21),BRASS,.008)
+for i in range(4):
+ z=-6.8+i*1.53
+ cube('Kitchen side window stile',P(6.86,2.20,z),(.16,.08,3.42),TRIM)
+ if i<3:cube('Kitchen side window glazing',P(6.96,2.21,z+.76),(.008,1.44,3.3),GLASS,trans=True)
+# Ornamental balcony balustrades.
+for i in range(52):
+ x=-6.9+i*.175
+ rod('wrought iron vertical',P(x,.12,-7.56),P(x,.95,-7.56),.011,BLACK)
+ if i%4==0:
+  ball('iron rosette',P(x,.8,-7.56),.032,BRASS)
+for yy in (.15,.96):
+ rod('balcony continuous rail',P(-6.9,yy,-7.56),P(2.25,yy,-7.56),.038,BLACK)
+# Creased linen curtains
+for j,x in enumerate((-6.7,.15)):
+ for i in range(10):
+  xx=x+i*.045
+  o=cube('curtain pleat',P(xx,2.3,-6.61+i*.02),(.04,.14,3.4),CUSHION,.014)
+# Seating area
+cube('large textured wool rug',P(-3.45,.018,.83),(6,4.08,.05),RUG,.015)
+def sofa(x,y,angle=0):
+ pieces=[]
+ pieces.append(cube('sofa seat',P(x,.52,y),(2.54,1.10,.49),FABRIC,.16))
+ pieces.append(cube('sofa back',P(x,.91,y+.45),(2.52,.29,.85),FABRIC,.1))
+ for dx in (-1.12,1.12):pieces.append(cube('sofa arm',P(x+dx,.70,y),(.29,1.12,.55),FABRIC,.095))
+ for dx in (-.7,0,.7):
+  pieces.append(cube('seat cushion',P(x+dx,.85,y-.08),(.65,.83,.15),CUSHION,.06))
+  pieces.append(cube('back cushion',P(x+dx,1.14,y+.34),(.53,.17,.44),FABRIC,.04))
+ for p in pieces:
+  p.rotation_euler.z=angle
+sofa(-5.5,2.18,.1)
+def chair(x,y,a=0):
+ pieces=[]
+ pieces.append(cube('armchair seat',P(x,.57,y),(1.11,1.02,.38),FABRIC,.135))
+ pieces.append(cube('armchair back',P(x,.94,y+.38),(1.12,.24,.76),FABRIC,.087))
+ for dx in (-.47,.47):pieces.append(cube('armchair arm',P(x+dx,.74,y),(.24,.95,.46),FABRIC,.08))
+ pieces.append(cube('armchair linen cushion',P(x,.90,y+.27),(.45,.14,.4),CUSHION,.045))
+ for p in pieces:p.rotation_euler.z=a
+chair(-3.35,-1.07,.2)
+chair(-1.78,-1.07,-.2)
+# Tables and books
+column('round coffee pedestal',P(-3.45,.22,1.41),.18,.43,DARKWOOD)
+column('round coffee surface',P(-3.45,.46,1.41),.68,.06,MARBLE,56)
+cube('rectangular coffee base',P(-3.10,.28,-.05),(1.43,.87,.51),DARKWOOD,.02)
+cube('rectangular marble top',P(-3.10,.53,-.05),(1.54,.98,.08),MARBLE,.015)
+for j in range(3):cube('stacked coffee table book',P(-3.05,.59+j*.037,-.2),(.52,.35,.034),[TRIM,DARKWOOD,CUSHION][j],.006)
+column('flower vase',P(-2.99,.72,-.33),.105,.31,GLASS,20)
+for i in range(16):
+ a=i*2.41
+ xx=-2.99+sin(a)*.2;yy=-.33+cos(a)*.2;zz=1.05+(i%5)*.06
+ rod('flower stem',P(-2.99,.76,-.33),P(xx,zz,yy),.005,OLIVE)
+ ball('white blossom',P(xx,zz,yy),.048,FLOWER)
+# Kitchen wall, oven, cabinetry and large marble island
+cube('dark walnut tower',P(5.75,2.10,-5.46),(2.23,1.03,4.13),DARKWOOD,.014)
+for h in (1.77,2.87):
+ cube('built-in oven bezel',P(5.75,h,-4.94),(.83,.046,.80),BLACK,.012)
+ cube('brushed oven pull',P(5.75,h-.3,-4.90),(.53,.055,.029),BRASS,.005)
+cube('back counter cupboard',P(5.05,.88,-1.3),(3.84,.71,1.75),DARKWOOD,.01)
+cube('back marble worktop',P(5.05,1.79,-1.3),(3.94,.74,.09),MARBLE,.012)
+cube('wall unit cupboards',P(5.05,3.26,-1.3),(3.94,.64,1.62),DARKWOOD,.012)
+cube('island joinery',P(3.63,.52,1.13),(3.58,1.48,1.05),DARKWOOD,.035)
+cube('large marble island',P(3.63,1.09,1.13),(3.70,1.60,.10),MARBLE,.016)
+cube('black undermount sink',P(4.46,1.15,.95),(.75,.54,.012),BLACK,.007)
+rod('brass tap rise',P(4.65,1.13,.95),P(4.65,1.76,.95),.024,BRASS)
+rod('brass tap spout',P(4.65,1.76,.95),P(4.39,1.76,.95),.024,BRASS)
+rod('brass tap down',P(4.39,1.76,.95),P(4.39,1.56,.95),.024,BRASS)
+def stool(x,y):
+ column('bar stool cushion',P(x,.79,y),.24,.10,BLACK)
+ cube('bar stool back',P(x,1.03,y+.12),(.49,.08,.38),FABRIC,.05)
+ for xx in (-.17,.17):
+  for yy in (-.16,.16):cube('thin brass stool leg',P(x+xx,.35,y+yy),(.034,.034,.69),BLACK,.009)
+stool(2.86,2.30);stool(4.13,2.30)
+column('dining table pedestal',P(1.24,.38,-3.63),.22,.75,DARKWOOD)
+column('round dining table top',P(1.24,.77,-3.63),1.05,.065,DARKWOOD,56)
+def dining(x,y,a=0):
+ pieces=[cube('dining chair seat',P(x,.53,y),(.56,.62,.12),FABRIC,.06),
+ cube('dining chair back',P(x,.99,y+.25),(.56,.14,.82),FABRIC,.07)]
+ for xx in (-.2,.2):
+  for yy in (-.2,.2):
+   pieces.append(cube('dining chair tapered legs',P(x+xx,.25,y+yy),(.035,.034,.47),BLACK))
+ for p in pieces:p.rotation_euler.z=a
+dining(.06,-3.60,-1.1);dining(2.47,-3.60,1.1);dining(1.28,-4.78)
+# Ceiling pendant cluster
+for i in range(3):
+ x=2.55+i*.45;h=3.34-i*.46
+ rod('pendant brass cable',P(x,4.36,.36),P(x,h+.19,.36),.009,BRASS)
+ ball('warm alabaster lamp sphere',P(x,h,.36),.21-i*.024,FLOWER)
+# Plants, travel journal near the door
+for px,py in ((-6.35,-6.1),(.38,-6.15)):
+ column('flower pot',P(px,.27,py),.26,.51,MARBLE)
+ rod('plant trunk',P(px,.50,py),P(px,1.37,py),.034,DARKWOOD)
+ for i in range(21):
+  theta=i*2.4
+  xx=px+cos(theta)*(.17+.06*(i%5));yy=py+sin(theta)*(.17+.07*(i%4))
+  zz=1.13+(i%6)*.10
+  rod('plant twig',P(px,.62,py),P(xx,zz,yy),.011,DARKWOOD)
+  ball('olive foliage',P(xx,zz,yy),.08+(i%4)*.014,OLIVE)
+cube('personal travel case',P(-6.5,.39,4.7),(.46,.31,.73),DARKWOOD,.048)
+cube('brass suitcase latch',P(-6.5,.72,4.7),(.32,.08,.035),BRASS,.009)
+
+# A beautiful warm-bounce lighting rig optimized for a fixed residential time of day.
+light('golden-hour sun','SUN',(-16,-33,33),(1,.66,.4),2.5)
+light('sun-lit window fill','AREA',(-5,-5,3.0),(1,.71,.48),720,8.0)
+light('warm back-wall bounce','AREA',(4,1.4,4.1),(1,.88,.73),430,5.5)
+light('soft apartment ambient','AREA',(-2,3.7,3.2),(1,.90,.80),510,7.0)
+for x,h in ((2.55,3.34),(3.0,2.88),(3.45,2.42)):
+ light('pendant illumination','POINT',P(x,h,.36),(1,.78,.57),42)
+camd=bpy.data.cameras.new('delivery camera')
+camera=bpy.data.objects.new('delivery camera',camd);scene.collection.objects.link(camera)
+camera.location=P(0,1.7,5.1)
+target=Vector(P(-1.4,1.7,-2.5))
+camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler()
+camd.lens=24;scene.camera=camera
+# Save editable Blender source for future architectural revisions.
+bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT,'assets-src','blender','apartment-source.blend'))
+# Lightmap export: combine static opaque geometry to give one coherent UV atlas.
+if BAKE:
+ bpy.ops.object.select_all(action='DESELECT')
+ for obj in opaque:obj.select_set(True)
+ bpy.context.view_layer.objects.active=opaque[0]
+ bpy.ops.object.join()
+ joined=bpy.context.object;joined.name='BAKED_ARCHITECTURAL_INTERIOR'
+ bpy.ops.object.mode_set(mode='EDIT')
+ bpy.ops.mesh.select_all(action='SELECT')
+ bpy.ops.uv.smart_project(island_margin=.008)
+ bpy.ops.object.mode_set(mode='OBJECT')
+ img=bpy.data.images.new('Apartment Cycles Combined Lightmap',width=2048,height=2048,alpha=False)
+ for mat in joined.data.materials:
+  if not mat:continue
+  nt=mat.node_tree
+  node=nt.nodes.new('ShaderNodeTexImage');node.name='Lightmap Bake Target';node.image=img;nt.nodes.active=node
+ bpy.ops.object.select_all(action='DESELECT');joined.select_set(True);bpy.context.view_layer.objects.active=joined
+ scene.render.bake.use_pass_direct=True
+ scene.render.bake.use_pass_indirect=True
+ scene.render.bake.use_pass_color=True
+ scene.cycles.samples=24
+ bpy.ops.object.bake(type='COMBINED',margin=6)
+ img.filepath_raw=os.path.join(OUT,'apartment-lightmap.png')
+ img.file_format='PNG';img.save()
+ for mat in joined.data.materials:
+  if not mat:continue
+  nt=mat.node_tree;nt.nodes.clear()
+  out=nt.nodes.new('ShaderNodeOutputMaterial')
+  emissive=nt.nodes.new('ShaderNodeEmission')
+  tex=nt.nodes.new('ShaderNodeTexImage')
+  tex.image=img;tex.interpolation='Linear'
+  nt.links.new(tex.outputs['Color'],emissive.inputs['Color'])
+  nt.links.new(emissive.outputs['Emission'],out.inputs['Surface'])
+# The GLB is the artifact loaded by React Three Fiber; no server-side GPU charges.
+bpy.ops.object.select_all(action='DESELECT')
+for obj in opaque+transparent:
+ try:obj.select_set(True)
+ except ReferenceError:pass
+if BAKE:joined.select_set(True)
+bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'apartment.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_animations=False)
+print('Asset ready:',os.path.join(OUT,'apartment.glb'),'baked',BAKE)

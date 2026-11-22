@@ -1,0 +1,30 @@
+name: Bake original Paris apartment (Blender)
+on:
+  push:
+    branches:
+      - rebuild/blender-r3f-apartment
+    paths:
+      - assets-src/blender/**
+      - .github/workflows/bake-apartment.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  blender-bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender from Ubuntu repositories
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq blender
+      - name: Generate and bake original apartment
+        run: blender -b -t 4 -P assets-src/blender/apartment.py -- --bake
+      - name: Commit baked scene asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/models/apartment.glb public/models/apartment-lightmap.png
+          git commit -m "Bake Paris apartment architecture in Blender" || exit 0
+          git push
