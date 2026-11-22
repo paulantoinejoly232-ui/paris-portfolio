@@ -8,6 +8,9 @@ on:
       - assets-src/blender/**
       - .github/workflows/bake-apartment.yml
   workflow_dispatch:
+concurrency:
+  group: apartment-furniture-${{ github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
@@ -41,10 +44,17 @@ jobs:
           name: blender-apartment-qa
           path: public/models/apartment-review.jpg
           retention-days: 3
-      - name: Commit corrected apartment asset
+      - name: Commit corrected apartment assets without overwriting intervening work
         run: |
+          mkdir -p /tmp/apartment-output
+          cp public/models/apartment.glb public/models/texture-*.png public/models/apartment-review.jpg /tmp/apartment-output/
+          git fetch origin "${GITHUB_REF_NAME}"
+          git reset --hard "origin/${GITHUB_REF_NAME}"
+          mkdir -p public/models
+          cp /tmp/apartment-output/* public/models/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/models/apartment.glb public/models/texture-*.png public/models/apartment-review.jpg
-          git commit -m "Export correctly oriented Paris apartment with PBR materials" || exit 0
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Export corrected photoreal apartment assets from Blender"
           git push
