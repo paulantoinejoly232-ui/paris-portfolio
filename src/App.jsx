@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import World from './World.jsx';
+import PhotoTour from './PhotoTour.jsx';
 
 const CONTENT={
  story:{index:'01 — ORIGINS',title:'Across cultures, across disciplines.',text:'French by nationality and raised in Hong Kong, I now study Mathematics at UCLA. I am interested in the intersection of analytical reasoning, products and people—and in the decisions that shape what gets built.',tags:['Hong Kong','UCLA','Mathematics','French']},
@@ -105,6 +106,7 @@ function Scene({active,blockedByPanel,held,onNearby,onOpen,onReady,mobile}){
 export default function App(){
  const [active,setActive]=useState(false),[loaded,setLoaded]=useState(false),[page,setPage]=useState(null),[near,setNear]=useState(''),[siteMode,setSiteMode]=useState(false);
  const [mobile,setMobile]=useState(false);
+ const [photoMode,setPhotoMode]=useState(true);
  const held=useRef(new Set());
  const canvas=()=>document.querySelector('#canvas canvas')||document.querySelector('#canvas');
  useEffect(()=>{
@@ -114,35 +116,42 @@ export default function App(){
  },[]);
  const open=useCallback(id=>{if(!CONTENT[id])return;document.exitPointerLock?.();setPage(id)},[]);
  const close=()=>setPage(null);
- const enter=()=>{setActive(true);if(!mobile)canvas()?.requestPointerLock?.()};
+ const enter=()=>{setActive(true);if(!photoMode&&!mobile)canvas()?.requestPointerLock?.()};
+ const changeExperience=nextPhoto=>{
+  if(photoMode===nextPhoto)return;
+  document.exitPointerLock?.();
+  setPhotoMode(nextPhoto);setActive(true);setLoaded(false);setNear('');setPage(null);
+ };
  useEffect(()=>{
   const keydown=e=>{
    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)||/^Key[WASDE]$/.test(e.code))e.preventDefault();
    held.current.add(e.code);
    if(e.code==='Escape'){setPage(null);return}
-   if(e.code==='KeyE'&&near&&active&&!page)open(near);
+   if(e.code==='KeyE'&&!photoMode&&near&&active&&!page)open(near);
   };
   const keyup=e=>held.current.delete(e.code);
   const blur=()=>held.current.clear();
   document.addEventListener('keydown',keydown);document.addEventListener('keyup',keyup);window.addEventListener('blur',blur);
   return()=>{document.removeEventListener('keydown',keydown);document.removeEventListener('keyup',keyup);window.removeEventListener('blur',blur)};
- },[near,active,page,open]);
+ },[near,active,page,open,photoMode]);
  useEffect(()=>{
-  if(!active||mobile||page||siteMode)return;
+  if(!active||mobile||page||siteMode||photoMode)return;
   const el=canvas();if(!el)return;
   const request=()=>{if(document.pointerLockElement!==el)el.requestPointerLock?.()};
   el.addEventListener('click',request);
   return()=>el.removeEventListener('click',request);
- },[active,mobile,page,siteMode]);
+ },[active,mobile,page,siteMode,photoMode]);
  const tapMove=(code,e,pressed)=>{
   e.preventDefault();if(pressed){held.current.add(code);e.currentTarget.setPointerCapture(e.pointerId)}
   else held.current.delete(code);
  };
  const p=page?CONTENT[page]:null;
  const nearby=LANDMARKS.find(l=>l.id===near);
- return <div className="app">
+ return <div className={photoMode?'app photo-experience':'app'}>
    <main className="view">
-    {!siteMode&&<Scene active={active} blockedByPanel={!!page} held={held} onNearby={setNear} onOpen={open} onReady={()=>setLoaded(true)} mobile={mobile}/>}
+    {!siteMode&&(photoMode
+     ? <PhotoTour active={active} blocked={!!page} onInteract={open} onLoaded={()=>setLoaded(true)}/>
+     : <Scene active={active} blockedByPanel={!!page} held={held} onNearby={setNear} onOpen={open} onReady={()=>setLoaded(true)} mobile={mobile}/>)}
     <div className="cinematic-shade" aria-hidden="true"/>
    </main>
    <header className="header">
@@ -154,23 +163,28 @@ export default function App(){
      <button onClick={()=>open('contact')}>Contact</button>
     </nav>
    </header>
+   {!siteMode&&<div className="experience-switch" role="group" aria-label="Choose your apartment experience">
+      <button className={photoMode?'is-current':''} aria-pressed={photoMode} onClick={()=>changeExperience(true)}>Photographic</button>
+      <button className={!photoMode?'is-current':''} aria-pressed={!photoMode} onClick={()=>changeExperience(false)}>Free Walk · 3D</button>
+    </div>}
+   {!siteMode&&<div className="mode-explanation">{photoMode?'Real photograph · limited camera movement':'3D reconstruction · unrestricted WASD'}</div>}
    {!siteMode&&<div className="locator">PARIS, FRANCE <span className="dot"/> GOLDEN HOUR</div>}
    {!loaded&&!siteMode&&<div className="loader"><div className="loader-monogram">PJ</div><p>PREPARING THE APARTMENT</p></div>}
    {!active&&!siteMode&&<section className="welcome" aria-label="Enter the apartment">
     <div className="welcome-shade"/>
     <div className="welcome-content"><span className="eyebrow">AN INVITATION · PARIS</span>
      <h1>Step inside<br/><em>my world.</em></h1>
-     <p>A different kind of portfolio. Explore a Parisian apartment and discover the places, people, and ideas behind my story.</p>
-     <button className="enter" disabled={!loaded} onClick={enter}>{loaded?'ENTER THE APARTMENT':'LOADING THE SPACE'} <span>↗</span></button>
-     <span className="intro-tip">W A S D TO EXPLORE · CLICK TO LOOK</span>
+     <p>{photoMode?'Begin inside the Paris apartment itself. Move gently through the photographic view, discover objects, and step into Free Walk whenever you want to explore the whole room.':'Explore a fully three-dimensional apartment and uncover the experiences behind my story.'}</p>
+     <button className="enter" disabled={!loaded} onClick={enter}>{loaded?(photoMode?'ENTER THE PHOTOGRAPH':'ENTER FREE WALK'):'LOADING THE SPACE'} <span>↗</span></button>
+     <span className="intro-tip">{photoMode?'WASD FOR SMALL CAMERA MOVEMENTS · CLICK THE OBJECTS':'WASD TO WALK · MOVE THE MOUSE TO LOOK'}</span>
     </div>
    </section>}
-   {active&&!siteMode&&!page&&<div className="hint">
+   {active&&!siteMode&&!page&&!photoMode&&<div className="hint">
     <span className="keycap">W</span><span className="keycap">A</span><span className="keycap">S</span><span className="keycap">D</span><span className="hint-words">MOVE</span>
     <span className="separator">/</span> MOUSE TO LOOK <span className="separator">/</span> <span className="keycap">E</span> INTERACT
    </div>}
-   {active&&!siteMode&&!page&&nearby&&<button className="nearby" onClick={()=>open(nearby.id)}><span className="nearby-plus">+</span>{nearby.label} <span className="nearby-action">PRESS E</span></button>}
-   {mobile&&active&&!siteMode&&!page&&<div className="mobile-pad">
+   {active&&!siteMode&&!page&&!photoMode&&nearby&&<button className="nearby" onClick={()=>open(nearby.id)}><span className="nearby-plus">+</span>{nearby.label} <span className="nearby-action">PRESS E</span></button>}
+   {mobile&&active&&!siteMode&&!page&&!photoMode&&<div className="mobile-pad">
     {[['ArrowUp','↑','forward'],['ArrowLeft','←','left'],['ArrowDown','↓','back'],['ArrowRight','→','right']].map(([code,sym,cls])=>
       <button key={code} className={cls} aria-label={cls} onPointerDown={e=>tapMove(code,e,true)} onPointerUp={e=>tapMove(code,e,false)} onPointerCancel={e=>tapMove(code,e,false)}>{sym}</button>)}
    </div>}
