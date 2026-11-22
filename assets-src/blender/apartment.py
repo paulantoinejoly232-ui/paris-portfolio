@@ -344,7 +344,8 @@ def scanned_surface(asset_id, mat, size='2k'):
     nt.nodes.remove(node)
   mappings=[
    ('Diffuse','Base Color','sRGB'),
-   ('Rough','Roughness','Non-Color'),
+    # Indoor satin-finish oak: do not bake a mirror-shiny roughness texture.
+   # ('Rough','Roughness','Non-Color'),
    ('nor_gl','Normal','Non-Color')
   ]
   for key,target,cs in mappings:
@@ -373,7 +374,7 @@ def scanned_surface(asset_id, mat, size='2k'):
      nt.links.remove(link)
     nt.links.new(node.outputs['Color'],bs.inputs[target])
   bs.inputs['Base Color'].default_value=(1,1,1,1)
-  mat.roughness=.5
+  bs.inputs['Roughness'].default_value=.62
   print('MATERIAL UPGRADE CC0 Poly Haven',asset_id)
  except Exception as error:
   print('MATERIAL FALLBACK',asset_id,repr(error))
@@ -453,10 +454,17 @@ _upgrade('modern three-seat sofa',
 # The source geometry is kept, including its real stitching and cushioning.
 def _reupholster_chairs():
  for obj in bpy.data.objects:
-  if not obj.name.startswith('CC0 modern armchair'):continue
-  if obj.type!='MESH':continue
-  for slot in obj.material_slots:
-   if slot.material and any(w in slot.material.name.lower() for w in ('pillow','leather','cushion','seat')):
+  if not obj.name.startswith('CC0 modern armchair') or obj.type!='MESH':continue
+  print('ARMCHAIR MATERIALS',obj.name,[(i,slot.material.name if slot.material else '') for i,slot in enumerate(obj.material_slots)])
+  count=len(obj.material_slots)
+  for index,slot in enumerate(obj.material_slots):
+   if not slot.material:continue
+   original=slot.material.name.lower()
+   # Real scanned mesh for silhouette + softer oatmeal linen rather than
+   # charcoal black leather; retain actual frame when identifiable.
+   if any(w in original for w in ('leg','wood','frame','metal')) or (count>1 and index==0):
+    slot.material=DARKWOOD
+   else:
     slot.material=FABRIC
 _reupholster_chairs()
 _upgrade('modern armchair left',
