@@ -1,6 +1,6 @@
 # Paul-Antoine Joly · The Apartment
 
-A free-to-host, first-person Paris apartment portfolio. Built as an original project in **React + Vite + React Three Fiber** with a **Blender/Cycles baked-geometry pipeline**. Inspired by the craftsmanship and baking process discussed in the public *Ekko656/portfolio-3d* project; **no files or assets from that repository are copied**.
+A free-to-host, first-person Paris apartment portfolio. Built as an original project in **React + Vite + React Three Fiber** with a **Blender-generated PBR materials and 3D geometry pipeline**. Inspired by the craftsmanship and baking process discussed in the public *Ekko656/portfolio-3d* project; **no files or assets from that repository are copied**.
 
 ## What visitors can do
 - Explore the apartment using **W A S D** (Shift to walk faster); move the mouse to look.
@@ -24,7 +24,7 @@ npm run dev
 ### Produce the Blender scene
 Install [Blender](https://www.blender.org/) (free), then from the repository root:
 \`\`\`bash
-blender --background --python assets-src/blender/apartment.py -- --bake
+blender --background --python assets-src/blender/apartment.py
 \`\`\`
 This creates the GLB asset loaded by the site and an editable \`assets-src/blender/apartment-source.blend\`. Blender requires memory and CPU time for baking; **deploys on Vercel need no GPU**.
 
@@ -38,3 +38,12 @@ Core room geometry and its textures are originally generated. The Paris view is 
 
 ## Deployment
 Connect this repository to Vercel; framework: Vite; build command: \`npm run build\`; output: \`dist\`.
+
+
+## Scene asset provenance (free to use)
+- Detailed modern armchair, dining chairs and potted plant: [Poly Haven](https://polyhaven.com/), CC0.
+- Contemporary three-seat sofa: [3DAssets.dev](https://3dassets.dev/assets/bedroom-and-living-room-furniture-sofa-three-seat-6be9b44b), CC0.
+- Paris exterior photograph: [Unsplash](https://unsplash.com/), under the Unsplash License. Cached locally for reliability; the image is a background plate, not part of the navigable geometry.
+- Other architecture and the surface texture maps were created for this site.
+
+This is a free hosted real-time architectural scene, not yet a perfect photogrammetric recreation of the source photo.
