@@ -348,9 +348,20 @@ function ModelOverride({onLoad}){
      mat.needsUpdate=true;
     }
    } else {
-    for(const mat of mats)if(mat && mat.isMeshStandardMaterial){mat.envMapIntensity=.8}
+    for(const mat of mats)if(mat && mat.isMeshStandardMaterial){
+     mat.envMapIntensity=.8;
+     // Polished satin oak should reflect softly, not like a wet mirror.
+     if(/herringbone|parquet/i.test(mat.name||'')){
+      mat.roughnessMap=null;
+      mat.roughness=.61;
+      mat.metalness=0;
+      mat.envMapIntensity=.42;
+      mat.needsUpdate=true;
+     }
+    }
    }
   });
+  window.__APARTMENT_GLB_READY=true;
   setModel(g.scene);onLoad(true);
  },undefined,()=>{onLoad(false)});
  }).catch(()=>{});
