@@ -37,8 +37,10 @@ function depthGeometry(depth,aspect){
  for(let y=0;y<NY;y++)for(let x=0;x<NX;x++){
   const a=y*(NX+1)+x,b=a+1,c=a+NX+1,d=c+1;
   function tri(i,j,k){
-   const lo=Math.min(dist[i],dist[j],dist[k]),hi=Math.max(dist[i],dist[j],dist[k]);
-   if(hi-lo<Math.max(.65,lo*.14))index.push(i,j,k);
+   // Keep the photo's surface continuous. Discarding triangles around
+   // depth edges produced visibly shredded furniture and black gaps.
+   // A future multi-view splat is needed to reconstruct true hidden sides.
+   index.push(i,j,k);
   }
   tri(a,c,b);tri(b,c,d);
  }
