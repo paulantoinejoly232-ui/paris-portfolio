@@ -92,7 +92,9 @@ export default function PhotoTour({active,blocked=false,onInteract,onLoaded}){
   }
 
   return <div className="photo-tour" aria-label="Photographic Paris apartment experience"
-    onPointerMove={pointerMove} onPointerUp={()=>{drag.current=null}}
+    onPointerMove={pointerMove}
+    onPointerDown={e=>{if(e.pointerType!=='mouse'&&!e.target.closest?.('.photo-marker'))drag.current={x:e.clientX,y:e.clientY};}}
+    onPointerUp={()=>{drag.current=null}}
     onPointerCancel={()=>{drag.current=null}}>
     <div ref={stage} className="photo-stage">
       <img src={SOURCE} alt="Golden-hour Paris apartment with the Eiffel Tower outside, refined living room and kitchen"
@@ -127,9 +129,5 @@ export default function PhotoTour({active,blocked=false,onInteract,onLoaded}){
       <a href="https://majorkeys.fr/" target="_blank" rel="noreferrer noopener">Reference photograph: Major Keys</a>
       <span> · Limited photographic viewpoint</span>
     </div>
-    {/* Touch drag adjusts the photographic parallax; the whole stage is not a 3D scene. */}
-    <div className="photo-touch-area" onPointerDown={e=>{
-      if(e.pointerType!=='mouse')drag.current={x:e.clientX,y:e.clientY};
-    }} aria-hidden="true"/>
   </div>;
 }
