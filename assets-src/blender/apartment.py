@@ -317,6 +317,102 @@ for z in (3.2,5.1):
  cube('wall field frame',P(-6.82,2.1,z),(.05,1.36,2.8),TRIM,.014)
  cube('wall field inset',P(-6.78,2.1,z),(.012,1.27,2.61),PLASTER,.002)
 
+
+# Optional real CC0 furniture meshes, downloaded at build time and embedded in GLB.
+# These replace basic scene primitives only after Blender successfully imports them.
+# Sources:
+# Poly Haven modern_arm_chair_01 + dining_chair_02 + potted_plant_01 (CC0)
+# 3DAssets.dev sofa three seat (CC0).
+def _download(url,path):
+ import urllib.request, shutil
+ os.makedirs(os.path.dirname(path),exist_ok=True)
+ req=urllib.request.Request(url,headers={'User-Agent':'ParisApartmentPortfolio/1.0'})
+ with urllib.request.urlopen(req,timeout=50) as stream,open(path,'wb') as target:shutil.copyfileobj(stream,target)
+ return path
+def _place_imported(objects,name,loc,width,rot=0,height=None):
+ # Work in Blender coordinates: (x,-three_z,z_height).
+ from mathutils import Vector
+ def bbox():
+  bpy.context.view_layer.update()
+  meshes=[o for o in objects if o.type=='MESH']
+  corners=[o.matrix_world @ Vector(corner) for o in meshes for corner in o.bound_box]
+  lo=Vector([min(v[i] for v in corners) for i in range(3)])
+  hi=Vector([max(v[i] for v in corners) for i in range(3)])
+  return lo,hi
+ roots=[o for o in objects if o.parent not in objects]
+ lo,hi=bbox()
+ dim=(hi.z-lo.z) if height is not None else (hi.x-lo.x)
+ fact=(height if height is not None else width)/max(dim,.01)
+ for root in roots:
+  root.scale*=fact
+  root.rotation_euler.z+=rot
+ lo,hi=bbox()
+ delta=Vector((loc[0]-(lo.x+hi.x)/2,loc[1]-(lo.y+hi.y)/2,loc[2]-lo.z))
+ for root in roots:root.location+=delta
+ for obj in objects:
+  if obj.type=='MESH':
+   obj.name='CC0 '+name+' '+obj.name
+   if obj not in opaque:opaque.append(obj)
+ return len([o for o in objects if o.type=='MESH'])
+def _polyhaven(name,loc,width,rot=0,height=None):
+ import urllib.request,json,tempfile
+ api='https://api.polyhaven.com/files/'+name
+ req=urllib.request.Request(api,headers={'User-Agent':'ParisApartmentPortfolio/1.0'})
+ data=json.load(urllib.request.urlopen(req,timeout=25))
+ gltf=data['gltf']['1k']['gltf']
+ with tempfile.TemporaryDirectory() as folder:
+  fn=os.path.join(folder,os.path.basename(gltf['url']))
+  _download(gltf['url'],fn)
+  for rel,info in gltf['include'].items():
+   _download(info['url'],os.path.join(folder,rel))
+  before=set(bpy.data.objects)
+  bpy.ops.import_scene.gltf(filepath=fn)
+  imported=list(set(bpy.data.objects)-before)
+  return _place_imported(imported,name,loc,width,rot,height)
+def _cdnglb(name,url,loc,width,rot=0):
+ import tempfile
+ with tempfile.TemporaryDirectory() as folder:
+  fn=_download(url,os.path.join(folder,name+'.glb'))
+  before=set(bpy.data.objects)
+  bpy.ops.import_scene.gltf(filepath=fn)
+  return _place_imported(list(set(bpy.data.objects)-before),name,loc,width,rot)
+def _remove_placeholders(prefixes):
+ global opaque
+ dead=[o for o in opaque if any(o.name.startswith(p) for p in prefixes)]
+ for obj in dead:
+  opaque.remove(obj)
+  bpy.data.objects.remove(obj,do_unlink=True)
+ return len(dead)
+def _upgrade(name,fn,remove):
+ try:
+  count=fn()
+  if count>0:
+   replaced=_remove_placeholders(remove)
+   print('ASSET UPGRADE',name,'meshes',count,'placeholder objects removed',replaced)
+ except Exception as err:
+  print('ASSET FALLBACK',name,repr(err))
+_upgrade('modern three-seat sofa',
+ lambda:_cdnglb('modern 3-seat sofa','https://cdn.3dassets.dev/assets/38778/v1/model.glb',(-5.5,-2.18,0),2.54,.1),
+ ('sofa seat','sofa back','sofa arm','seat cushion','back cushion'))
+_upgrade('modern armchair left',
+ lambda:_polyhaven('modern_arm_chair_01',(-3.35,1.07,0),1.09,.20),
+ ('armchair seat','armchair back','armchair arm','armchair linen cushion'))
+# Same detailed armchair file, with a second instance at the other side of the rug.
+# The first import replaces both placeholders; place another copy from cache/server.
+_upgrade('modern armchair right',
+ lambda:_polyhaven('modern_arm_chair_01',(-1.78,1.07,0),1.09,-.20),
+ ())
+for position,rotation in [
+ ((.06,3.60,0),-1.1),((2.47,3.60,0),1.1),((1.28,4.78,0),0)
+]:
+ _upgrade('dining chair',
+  lambda pos=position,ang=rotation:_polyhaven('dining_chair_02',pos,.56,ang),
+  ('dining chair seat','dining chair back','dining chair tapered legs'))
+# First plant near the windows. The high-detail leaves replace the spherical toy foliage.
+_upgrade('real potted plant',
+ lambda:_polyhaven('potted_plant_01',(-6.35,6.10,0),1.0,0,1.44),
+ ('flower pot','plant trunk','plant twig','olive foliage'))
+
 # A beautiful warm-bounce lighting rig optimized for a fixed residential time of day.
 light('golden-hour sun','SUN',(-16,-33,33),(1,.66,.4),2.5)
 light('sun-lit window fill','AREA',(-5,-5,3.0),(1,.71,.48),720,8.0)
