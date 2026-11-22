@@ -64,7 +64,7 @@ function Surface({photo,depth,active,onInteract}){
   </mesh>
   <mesh position={[0,0,-18]} renderOrder={0}>
    <planeGeometry args={[18*Math.tan(FOV*Math.PI/360)*2*Math.max(aspect,1),18*Math.tan(FOV*Math.PI/360)*2*Math.max(aspect,1)]}/>
-   <meshBasicMaterial map={texture} side={THREE.DoubleSide} toneMapped={false} transparent opacity={.5} depthWrite={false}/>
+   <meshBasicMaterial map={texture} side={THREE.DoubleSide} toneMapped={false} transparent={false} depthWrite={true}/>
   </mesh>
   {active&&anchors.map(m=><Html key={m.id} center position={m.position} zIndexRange={[20,0]} distanceFactor={3}>
    <button className="photo-depth-marker" onClick={e=>{e.stopPropagation();onInteract(m.id)}} title={m.label}>
