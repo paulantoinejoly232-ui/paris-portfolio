@@ -24,7 +24,7 @@ try{
 await page.locator('.enter').click({timeout:30000});
 await page.waitForTimeout(1200);
 await page.waitForFunction(()=>typeof window.__APARTMENT_SET_VIEW==='function',{timeout:8000});
-await page.evaluate(()=>window.__APARTMENT_SET_VIEW([1.15,1.71,5.25],.20,-.06));
+await page.evaluate(()=>window.__APARTMENT_SET_VIEW([1.15,1.71,5.25],-.13,-.055));
 await page.waitForTimeout(1500);
 console.log('BROWSER CAMERA',JSON.stringify(await page.evaluate(()=>window.__APARTMENT_CAMERA)));
 await page.screenshot({path:'visual-qa/apartment-browser.png',fullPage:false,timeout:90000,animations:'disabled'});
