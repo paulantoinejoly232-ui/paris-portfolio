@@ -474,7 +474,7 @@ _upgrade('modern three-seat sofa',
 # The source geometry is kept, including its real stitching and cushioning.
 def _reupholster_chairs():
  for obj in bpy.data.objects:
-  if not obj.name.startswith('CC0 modern armchair') or obj.type!='MESH':continue
+  if not obj.name.startswith('CC0 modern_arm_chair_01') or obj.type!='MESH':continue
   print('ARMCHAIR MATERIALS',obj.name,[(i,slot.material.name if slot.material else '') for i,slot in enumerate(obj.material_slots)])
   count=len(obj.material_slots)
   for index,slot in enumerate(obj.material_slots):
@@ -482,7 +482,7 @@ def _reupholster_chairs():
    original=slot.material.name.lower()
    # Real scanned mesh for silhouette + softer oatmeal linen rather than
    # charcoal black leather; retain actual frame when identifiable.
-   if any(w in original for w in ('leg','wood','frame','metal')) or (count>1 and index==0):
+   if any(w in original for w in ('leg','wood','frame','metal')):
     slot.material=DARKWOOD
    else:
     slot.material=FABRIC
