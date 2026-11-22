@@ -61,6 +61,13 @@ function Controls({active,blockedByPanel,held,onNearby,mobile}){
  useFrame((state,dt)=>{
   camera.rotation.set(pitch.current,yaw.current,0,'YXZ');
   camera.position.y=1.71;
+  if(import.meta.env.DEV){
+   window.__APARTMENT_CAMERA={xyz:camera.position.toArray(),yaw:yaw.current,pitch:pitch.current};
+   window.__APARTMENT_SET_VIEW=(xyz,heading,tilt)=>{
+    camera.position.set(xyz[0],1.71,xyz[2]);
+    yaw.current=heading;pitch.current=tilt;
+   };
+  }
   if(active&&!blockedByPanel){
    const h=held.current;
    let forward=Number(h.has('KeyW')||h.has('ArrowUp'))-Number(h.has('KeyS')||h.has('ArrowDown'));
