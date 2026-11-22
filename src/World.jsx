@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { RoundedBox, ContactShadows, Sky } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 function makeTexture(kind){
@@ -147,12 +148,15 @@ function Exterior({m}){
  const loader=new THREE.TextureLoader();
  loader.setCrossOrigin('anonymous');
  loader.load('/assets/paris-eiffel.jpg',t=>{
-  t.colorSpace=THREE.SRGBColorSpace;setPhoto(t)
+  t.colorSpace=THREE.SRGBColorSpace;
+  // Reference composition: the Eiffel Tower belongs on the left, not the right.
+  t.wrapS=THREE.RepeatWrapping;t.repeat.x=-1;t.offset.x=1;
+  setPhoto(t)
  },undefined,()=>{});
  },[]);
  return <group>
  {/* The photograph is scenery only, not a fake navigable room. */}
- <mesh position={[-4,3,-38]}><planeGeometry args={[58,36]}/>{photo?<meshBasicMaterial map={photo} toneMapped={false}/>:<meshBasicMaterial color="#b8aaa1"/>}</mesh>
+ <mesh position={[-4,3,-38]}><planeGeometry args={[58,36]}/>{photo?<meshBasicMaterial map={photo} color="#ffe9cf" toneMapped={false}/>:<meshBasicMaterial color="#b8aaa1"/>}</mesh>
  {Array.from({length:18},(_,i)=>{
   const x=(i-9)*5.8,z=-18-(i%4)*8,h=2+(i*7%8);
   return <group key={i} position={[x,-12,z]}>
@@ -301,6 +305,23 @@ function Props({m,onInteract}){
  <mesh onClick={()=>onInteract('contact')} position={[5.85,1.65,3.85]}><boxGeometry args={[.45,.42,.35]}/><meshBasicMaterial transparent opacity={0}/></mesh>
  </group>;
 }
+
+function ArchitecturalReflections(){
+ const {gl,scene}=useThree();
+ useEffect(()=>{
+  const pmrem=new THREE.PMREMGenerator(gl);
+  const lighting=new RoomEnvironment();
+  const target=pmrem.fromScene(lighting,.025);
+  scene.environment=target.texture;
+  scene.environmentIntensity=.56;
+  return ()=>{
+   if(scene.environment===target.texture)scene.environment=null;
+   target.dispose();pmrem.dispose();lighting.dispose();
+  };
+ },[gl,scene]);
+ return null;
+}
+
 function ModelOverride({onLoad}){
  const [model,setModel]=useState(null);
  useEffect(()=>{
@@ -310,7 +331,37 @@ function ModelOverride({onLoad}){
   if(!response.ok || (response.headers.get('content-type')||'').includes('html'))return;
   loader.load('/models/apartment.glb',g=>{
   if(!mounted)return;
-  g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  g.scene.traverse(o=>{
+   if(!o.isMesh)return;
+   const mats=Array.isArray(o.material)?o.material:[o.material];
+   const isWindow=/glaz|window glass/i.test(o.name)||mats.some(mat=>/glaz|window glass/i.test(mat?.name||''));
+   o.castShadow=!isWindow;
+   o.receiveShadow=!isWindow;
+   if(isWindow){
+    for(const mat of mats){
+     if(!mat)continue;
+     mat.transparent=true;
+     mat.opacity=.09;
+     mat.roughness=.035;
+     mat.depthWrite=false;
+     mat.side=THREE.DoubleSide;
+     mat.needsUpdate=true;
+    }
+   } else {
+    for(const mat of mats)if(mat && mat.isMeshStandardMaterial){
+     mat.envMapIntensity=.8;
+     // Polished satin oak should reflect softly, not like a wet mirror.
+     if(/herringbone|parquet/i.test(mat.name||'')){
+      mat.roughnessMap=null;
+      mat.roughness=.61;
+      mat.metalness=0;
+      mat.envMapIntensity=.42;
+      mat.needsUpdate=true;
+     }
+    }
+   }
+  });
+  window.__APARTMENT_GLB_READY=true;
   setModel(g.scene);onLoad(true);
  },undefined,()=>{onLoad(false)});
  }).catch(()=>{});
@@ -326,16 +377,17 @@ export default function World({onInteract,onReady}){
  <color attach="background" args={['#b49c84']}/>
  <fog attach="fog" args={['#d7a584',55,180]}/>
  <Sky distance={450000} sunPosition={[-80,9,-190]} turbidity={8} rayleigh={.3} mieCoefficient={.009} mieDirectionalG={.85}/>
- <hemisphereLight args={['#ffe0c1','#544635',1.22]}/>
- <ambientLight intensity={.18} color="#ffe9d6"/>
- <directionalLight position={[-29,23,-30]} color="#ffbb7d" intensity={3.2} castShadow shadow-mapSize={[2048,2048]} shadow-normalBias={.035}
+ <hemisphereLight args={['#ffe1c4','#695a4e',1.95]}/>
+ <ambientLight intensity={.28} color="#ffe9d6"/>
+ <directionalLight position={[-29,23,-30]} color="#ffbb7d" intensity={3.75} castShadow shadow-mapSize={[2048,2048]} shadow-normalBias={.035}
  shadow-camera-near={.5} shadow-camera-far={95} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={24} shadow-camera-bottom={-24}/>
- <pointLight position={[-5,2.7,-5]} color="#ffd3a5" intensity={1.0} distance={11}/>
- <pointLight position={[3.2,3,1]} color="#ffe6c5" intensity={.75} distance={9}/>
+ <pointLight position={[-5,2.7,-5]} color="#ffd3a5" intensity={2.0} distance={11}/>
+ <pointLight position={[3.2,3,1]} color="#ffe6c5" intensity={1.35} distance={9}/>
+ <ArchitecturalReflections/>
  <Exterior m={m}/>
  {/* The Blender-generated GLB supersedes code geometry once committed. */}
  {!customLoaded&&<group><Architecture m={m}/><Living m={m} onInteract={onInteract}/><Kitchen m={m} onInteract={onInteract}/><Props m={m} onInteract={onInteract}/><Lamps m={m}/></group>}
  <ModelOverride onLoad={setCustomLoaded}/>
- <ContactShadows position={[0,-.005,0]} opacity={.24} scale={16} blur={2.6} far={5} resolution={512} color="#5d3a24"/>
+ {customLoaded&&<ContactShadows position={[0,-.005,0]} opacity={.24} scale={16} blur={2.6} far={5} frames={1} resolution={512} color="#5d3a24"/>}
  </group>;
 }

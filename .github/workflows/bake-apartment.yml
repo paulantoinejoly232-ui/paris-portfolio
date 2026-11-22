@@ -2,7 +2,7 @@ name: Export textured Paris apartment (Blender)
 on:
   push:
     branches:
-      - fix/apartment-realism-materials
+      - upgrade/architectural-fidelity-v4
       - rebuild/blender-r3f-apartment
     paths:
       - assets-src/blender/**
@@ -19,25 +19,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect CC0 furniture source metadata
-        run: |
-          python3 - <<'PY'
-          import json, urllib.request
-          for slug in ['modern_arm_chair_01','dining_chair_02']:
-              try:
-                  request=urllib.request.Request('https://api.polyhaven.com/files/'+slug,headers={'User-Agent':'Portfolio-ArchViz/1.0'})
-                  data=json.load(urllib.request.urlopen(request,timeout=20))
-                  print('MODEL',slug,'CATEGORIES',list(data.keys()))
-                  print('GLTF',json.dumps(data.get('gltf',{}))[:3500])
-              except Exception as e:
-                  print('MODEL API ERROR',slug,str(e))
-          PY
       - name: Install Blender from Ubuntu repositories
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq blender python3-numpy
-      - name: Generate physically based apartment
-        run: blender -b -t 4 -P assets-src/blender/apartment.py
       - name: Cache Unsplash Eiffel photograph for the outside view
         run: |
           mkdir -p public/assets
@@ -45,6 +30,8 @@ jobs:
             'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?fm=jpg&fit=crop&w=1800&q=84' \
             --output public/assets/paris-eiffel.jpg
           file public/assets/paris-eiffel.jpg
+      - name: Generate detailed apartment with authentic CC0 scanned oak
+        run: blender -b -t 4 -P assets-src/blender/apartment.py
       - name: Upload Blender review screenshot
         uses: actions/upload-artifact@v4
         with:
@@ -65,5 +52,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/models/apartment.glb public/models/texture-*.png public/models/apartment-review.jpg public/assets/paris-eiffel.jpg
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Export corrected photoreal apartment assets from Blender"
+          git commit -m "Export Paris apartment v4 with scanned parquet and architectural detailing"
           git push

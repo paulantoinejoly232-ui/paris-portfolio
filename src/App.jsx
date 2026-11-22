@@ -34,10 +34,10 @@ function blocked(x,z){
 }
 function Controls({active,blockedByPanel,held,onNearby,mobile}){
  const {camera,gl}=useThree();
- const yaw=useRef(-.20),pitch=useRef(-.08),prev=useRef(null),lastNearby=useRef('');
+ const yaw=useRef(-.13),pitch=useRef(-.055),prev=useRef(null),lastNearby=useRef('');
  useEffect(()=>{
   camera.rotation.order='YXZ';
-  camera.position.set(0,1.71,5.1);
+  camera.position.set(1.15,1.71,5.25);
   const move=e=>{
    if(!active||blockedByPanel)return;
    let dx=0,dy=0;
@@ -61,6 +61,13 @@ function Controls({active,blockedByPanel,held,onNearby,mobile}){
  useFrame((state,dt)=>{
   camera.rotation.set(pitch.current,yaw.current,0,'YXZ');
   camera.position.y=1.71;
+  if(import.meta.env.DEV){
+   window.__APARTMENT_CAMERA={xyz:camera.position.toArray(),yaw:yaw.current,pitch:pitch.current};
+   window.__APARTMENT_SET_VIEW=(xyz,heading,tilt)=>{
+    camera.position.set(xyz[0],1.71,xyz[2]);
+    yaw.current=heading;pitch.current=tilt;
+   };
+  }
   if(active&&!blockedByPanel){
    const h=held.current;
    let forward=Number(h.has('KeyW')||h.has('ArrowUp'))-Number(h.has('KeyS')||h.has('ArrowDown'));
@@ -89,8 +96,8 @@ function Scene({active,blockedByPanel,held,onNearby,onOpen,onReady,mobile}){
  const onceReady=useCallback(()=>{if(!initialized.current){initialized.current=true;onReady()}},[onReady]);
  return <Canvas id="canvas" aria-label="Walk around a 3D Parisian apartment"
    shadows gl={{antialias:true,alpha:false,powerPreference:'high-performance'}} dpr={[1,Math.min(devicePixelRatio,mobile?1.25:1.8)]}
-   camera={{fov:66,near:.05,far:650,position:[0,1.71,5.1]}}
-   onCreated={({gl})=>{gl.outputColorSpace=THREE.SRGBColorSpace;gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.16}}>
+   camera={{fov:69,near:.05,far:650,position:[1.15,1.71,5.25]}}
+   onCreated={({gl})=>{gl.outputColorSpace=THREE.SRGBColorSpace;gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.26}}>
    <World onInteract={onOpen} onReady={onceReady}/>
    <Controls active={active} blockedByPanel={blockedByPanel} held={held} onNearby={onNearby} mobile={mobile}/>
  </Canvas>;

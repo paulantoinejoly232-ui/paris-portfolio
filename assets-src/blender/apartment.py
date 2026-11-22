@@ -166,7 +166,12 @@ def light(name,typ,loc,color,power,size=None):
 # Apartment architecture: metres, Y is horizontal depth in Blender, Z vertical.
 # Three.js frontend uses Y vertical, negative Z towards the Paris window.
 def P(x,height,z):return (x,-z,height)
-cube('Solid herringbone oak floor',P(0,-.15,0),(14,14,.25),FLOOR)
+floor=cube('Solid herringbone oak floor',P(0,-.15,0),(14,14,.25),FLOOR)
+# One texture unit covers ~3.5m, never the entire 14m room.
+if floor.data.uv_layers.active:
+ for cell in floor.data.uv_layers.active.data:
+  cell.uv.x*=4.0
+  cell.uv.y*=4.0
 cube('Warm plaster ceiling',P(0,4.47,0),(14,14,.24),TRIM)
 cube('Left apartment wall',P(-6.98,2.2,0),(.2,14,4.4),PLASTER)
 cube('Right apartment wall',P(6.98,2.2,0),(.2,14,4.4),PLASTER)
@@ -191,11 +196,31 @@ cube('Cross beam',P(0,4.32,-2.5),(14,.2,.16),TRIM)
 for i in range(6):
  x=-6.95+i*1.79
  cube('French door stile',P(x,2.20,-6.87),(.075,.16,3.42),TRIM,.009)
- if i<5:
+ if i<5 and i!=2:
   cube('French door glazing',P(x+.895,2.19,-6.94),(1.73,.008,3.32),GLASS,trans=True)
   cube('Window midrail',P(x+.895,2.11,-6.84),(1.70,.09,.045),TRIM,.007)
   cube('Window upper rail',P(x+.895,3.39,-6.84),(1.70,.09,.045),TRIM,.007)
   cube('Door handles brushed brass',P(x+.9,1.48,-6.79),(.035,.07,.21),BRASS,.008)
+
+# Signature of the source photo: one French door is open inwards. The door
+# comprises real glass, painted wood, brass handle and hinged frame; not an image.
+hinge_x=-6.95+2*1.79
+hinge=bpy.data.objects.new('Open French door - hinged 52 degrees',None)
+scene.collection.objects.link(hinge)
+hinge.location=P(hinge_x,0,-6.86)
+hinge.rotation_euler.z=-math.radians(52)
+def hinged_cube(label,dx,h,zdepth,width,depth,height,mat,r=.0,glazing=False):
+ o=cube(label,(0,0,0),(width,depth,height),mat,r,trans=glazing)
+ o.parent=hinge
+ o.location=(dx,-zdepth,h)
+ return o
+hinged_cube('Open French door frameless clear glass',.86,2.13,.0,1.63,.009,3.22,GLASS,glazing=True)
+for xx in (0.04,1.73):
+ hinged_cube('Open French door white stile',xx,2.14,.005,.085,.11,3.40,TRIM,.009)
+for yy in (.45,2.08,3.82):
+ hinged_cube('Open French door white horizontal rail',.87,yy,.005,1.72,.095,.058,TRIM,.005)
+hinged_cube('Open French door brass handle',1.56,1.50,-.072,.045,.07,.16,BRASS,.009)
+
 for i in range(4):
  z=-6.8+i*1.53
  cube('Kitchen side window stile',P(6.86,2.20,z),(.16,.08,3.42),TRIM)
@@ -323,6 +348,57 @@ for z in (3.2,5.1):
 # Sources:
 # Poly Haven modern_arm_chair_01 + dining_chair_02 + potted_plant_01 (CC0)
 # 3DAssets.dev sofa three seat (CC0).
+
+# An actual CC0 scanned surface is dramatically more realistic than the
+# old synthetic stripes, which looked like large dark cracks in the floor.
+def scanned_surface(asset_id, mat, size='2k'):
+ import json,urllib.request
+ request=urllib.request.Request('https://api.polyhaven.com/files/'+asset_id,
+                                headers={'User-Agent':'ParisPortfolio-CC0-Archviz/1.0'})
+ try:
+  info=json.load(urllib.request.urlopen(request,timeout=30))
+  nt=mat.node_tree
+  bs=nt.nodes.get('Principled BSDF')
+  for node in list(nt.nodes):
+   if node.type=='TEX_IMAGE':
+    nt.nodes.remove(node)
+  mappings=[
+   ('Diffuse','Base Color','sRGB'),
+    # Indoor satin-finish oak: do not bake a mirror-shiny roughness texture.
+   # ('Rough','Roughness','Non-Color'),
+   ('nor_gl','Normal','Non-Color')
+  ]
+  for key,target,cs in mappings:
+   variants=info.get(key,{})
+   entry=None
+   for resolution in (size,'1k'):
+    for extension in ('jpg','png'):
+     entry=variants.get(resolution,{}).get(extension)
+     if entry:break
+    if entry:break
+   if not entry:continue
+   suffix='jpg' if entry['url'].lower().split('?')[0].endswith('.jpg') else 'png'
+   filepath=os.path.join(OUT,'CC0-'+asset_id+'-'+key+'.'+suffix)
+   _download(entry['url'],filepath)
+   image=bpy.data.images.load(filepath,check_existing=True)
+   image.colorspace_settings.name=cs
+   node=nt.nodes.new('ShaderNodeTexImage')
+   node.image=image
+   if target=='Normal':
+    normal=nt.nodes.new('ShaderNodeNormalMap')
+    normal.inputs['Strength'].default_value=.42
+    nt.links.new(node.outputs['Color'],normal.inputs['Color'])
+    nt.links.new(normal.outputs['Normal'],bs.inputs['Normal'])
+   else:
+    for link in list(bs.inputs[target].links):
+     nt.links.remove(link)
+    nt.links.new(node.outputs['Color'],bs.inputs[target])
+  bs.inputs['Base Color'].default_value=(1,1,1,1)
+  bs.inputs['Roughness'].default_value=.62
+  print('MATERIAL UPGRADE CC0 Poly Haven',asset_id)
+ except Exception as error:
+  print('MATERIAL FALLBACK',asset_id,repr(error))
+
 def _download(url,path):
  import urllib.request, shutil
  os.makedirs(os.path.dirname(path),exist_ok=True)
@@ -394,6 +470,23 @@ def _upgrade(name,fn,remove):
 _upgrade('modern three-seat sofa',
  lambda:_cdnglb('modern 3-seat sofa','https://cdn.3dassets.dev/assets/38778/v1/model.glb',(-5.5,-2.18,0),2.54,.1),
  ('sofa seat','sofa back','sofa arm','seat cushion','back cushion'))
+# Replace all leather-looking charcoal seat cushions with warm textured linen.
+# The source geometry is kept, including its real stitching and cushioning.
+def _reupholster_chairs():
+ for obj in bpy.data.objects:
+  if not obj.name.startswith('CC0 modern_arm_chair_01') or obj.type!='MESH':continue
+  print('ARMCHAIR MATERIALS',obj.name,[(i,slot.material.name if slot.material else '') for i,slot in enumerate(obj.material_slots)])
+  count=len(obj.material_slots)
+  for index,slot in enumerate(obj.material_slots):
+   if not slot.material:continue
+   original=slot.material.name.lower()
+   # Real scanned mesh for silhouette + softer oatmeal linen rather than
+   # charcoal black leather; retain actual frame when identifiable.
+   if any(w in original for w in ('leg','wood','frame','metal')):
+    slot.material=DARKWOOD
+   else:
+    slot.material=FABRIC
+_reupholster_chairs()
 _upgrade('modern armchair left',
  lambda:_polyhaven('modern_arm_chair_01',(-3.35,1.07,0),1.09,.20),
  ('armchair seat','armchair back','armchair arm','armchair linen cushion'))
@@ -412,9 +505,103 @@ for position,rotation in [
 _upgrade('real potted plant',
  lambda:_polyhaven('potted_plant_01',(-6.35,6.10,0),1.0,0,1.44),
  ('flower pot','plant trunk','plant twig','olive foliage'))
+# Reupholster both complete CC0 chairs (imports finish before this pass).
+_reupholster_chairs()
+
+# Real-world sculpted coffee tables and ceramics: essential close-up details.
+_upgrade('scanned sculptural marble round coffee table',
+ lambda:_polyhaven('coffee_table_round_01',(-3.45,-1.41,0),1.36),
+ ('round coffee pedestal','round coffee surface'))
+_upgrade('wood and stone rectangular coffee table',
+ lambda:_polyhaven('modern_coffee_table_01',(-3.10,.05,0),1.53),
+ ('rectangular coffee base','rectangular marble top'))
+_upgrade('hand-painted ceramic table vase',
+ lambda:_polyhaven('ceramic_vase_04',(-3.0,.16,.55),.28,0,.26),
+ ('flower vase',))
+
+# Natural oak material has scanned PBR colour/roughness/normal maps.
+scanned_surface('herringbone_parquet',FLOOR,'2k')
+
+
+# Real pleated linen instead of vertical rectangular bars.
+# Sinusoidal cloth profile, subdued seams, hem and believable fabric thickness.
+def linen_curtain(name,left,width,depth,height=3.6):
+ nx=48;ny=28
+ verts=[];faces=[];uv=[]
+ for j in range(ny+1):
+  t=j/ny
+  for i in range(nx+1):
+   u=i/nx
+   x=left+width*u
+   wave=.095*sin(2*pi*u*7.5)+.025*sin(2*pi*u*3.1)
+   # bottom gathers slightly, rather than being a perfectly flat rectangle
+   wave*=1+.24*t
+   y=depth+wave
+   z=.40+t*height
+   verts.append(P(x,z,y))
+ for j in range(ny):
+  for i in range(nx):
+   a=j*(nx+1)+i
+   faces.extend(((a,a+1,a+nx+1),(a+1,a+nx+2,a+nx+1)))
+ mesh=bpy.data.meshes.new(name+' woven cloth mesh')
+ mesh.from_pydata(verts,[],faces);mesh.update()
+ obj=bpy.data.objects.new(name,mesh);scene.collection.objects.link(obj)
+ own(obj,CUSHION)
+ for f in obj.data.polygons:f.use_smooth=True
+ solid=obj.modifiers.new('cloth thickness','SOLIDIFY');solid.thickness=.006
+ return obj
+for obj in list(opaque):
+ if obj.name.startswith('curtain pleat'):
+  opaque.remove(obj);bpy.data.objects.remove(obj,do_unlink=True)
+linen_curtain('Full-height left window curtain',-6.80,.70,-6.60)
+linen_curtain('Soft pleated central drape',.20,.69,-6.62)
+# Refined rosette profile below the cornice. This adds scale cues that the
+# previous three bare rectangular strips could not provide.
+for z in (-6.72,6.72):
+ for i in range(66):
+  x=-6.55+i*.201
+  ball('hand-finished cornice bead',P(x,4.04,z),.026,TRIM)
+for x in (-6.72,6.72):
+ for i in range(66):
+  z=-6.55+i*.201
+  ball('hand-finished side cornice bead',P(x,4.04,z),.026,TRIM)
+# Wrought iron scrollwork to evoke the balcony in the source photograph.
+def wrought_scroll(name,cx,cy,height=.50,turns=1.15):
+ steps=25
+ points=[]
+ for k in range(steps):
+  t=k/(steps-1)
+  a=2*pi*turns*t
+  rr=(1-t)*.18+.015
+  points.append(P(cx+rr*cos(a),cy+rr*sin(a),-7.56))
+ for i in range(steps-1):
+  rod(name,points[i],points[i+1],.012,BLACK)
+for j in range(23):
+ wrought_scroll('balcony artisan spiral',-6.55+j*.39,.53)
+
+
+# Collapse static architectural microgeometry into a few batched meshes.
+# This preserves the relief while dramatically reducing browser draw calls.
+def batch_details(label,prefixes):
+ objects=[o for o in list(opaque) if o.type=='MESH' and any(o.name.startswith(prefix) for prefix in prefixes)]
+ if len(objects)<2:return
+ bpy.ops.object.select_all(action='DESELECT')
+ for o in objects:o.select_set(True)
+ bpy.context.view_layer.objects.active=objects[0]
+ bpy.ops.object.join()
+ merged=bpy.context.object
+ merged.name=label
+ for o in objects:
+  if o in opaque:opaque.remove(o)
+ opaque.append(merged)
+ print('BATCHED',label,'part_count',len(objects))
+batch_details('Balcony wrought iron artisan railing',['balcony artisan spiral','wrought iron vertical','balcony continuous rail','iron rosette'])
+batch_details('Intricate plaster cornice beads',['hand-finished cornice bead','hand-finished side cornice bead'])
 
 # A beautiful warm-bounce lighting rig optimized for a fixed residential time of day.
-light('golden-hour sun','SUN',(-16,-33,33),(1,.66,.4),2.5)
+daylight=light('golden-hour sun','SUN',P(-28,25,-34),(1,.76,.54),3.2)
+# Blender Sun location alone does not control direction: aim it through glass.
+daylight.rotation_euler=(Vector(P(1,1,1))-Vector(P(-28,25,-34))).to_track_quat('-Z','Y').to_euler()
 light('sun-lit window fill','AREA',(-5,-5,3.0),(1,.71,.48),720,8.0)
 light('warm back-wall bounce','AREA',(4,1.4,4.1),(1,.88,.73),430,5.5)
 light('soft apartment ambient','AREA',(-2,3.7,3.2),(1,.90,.80),510,7.0)
@@ -422,8 +609,8 @@ for x,h in ((2.55,3.34),(3.0,2.88),(3.45,2.42)):
  light('pendant illumination','POINT',P(x,h,.36),(1,.78,.57),42)
 camd=bpy.data.cameras.new('delivery camera')
 camera=bpy.data.objects.new('delivery camera',camd);scene.collection.objects.link(camera)
-camera.location=P(0,1.7,5.1)
-target=Vector(P(-1.4,1.7,-2.5))
+camera.location=P(1.1,1.68,5.35)
+target=Vector(P(-1.0,1.56,-5.2))
 camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler()
 camd.lens=24;scene.camera=camera
 # Save editable Blender source for future architectural revisions.
@@ -437,6 +624,30 @@ for obj in opaque+transparent:
  except ReferenceError:pass
 # Export the original objects with their individual material textures.
 bpy.ops.export_scene.gltf(filepath=os.path.join(OUT,'apartment.glb'),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_animations=False)
+
+# The render review needs the same Eiffel view as the actual website.
+# Add this plane AFTER glTF export so there is no duplicate photo in WebGL.
+photo=os.path.join(ROOT,'public','assets','paris-eiffel.jpg')
+if os.path.isfile(photo):
+ try:
+  bpy.ops.mesh.primitive_plane_add(size=2,location=P(-4,3,-38))
+  backdrop=bpy.context.object;backdrop.name='QA-only Paris skyline backdrop'
+  backdrop.scale=(30,18,1)
+  backdrop.rotation_euler.x=pi/2
+  m=bpy.data.materials.new('Paris view - review emission only');m.use_nodes=True
+  n=m.node_tree.nodes
+  n.clear()
+  out=n.new('ShaderNodeOutputMaterial');emit=n.new('ShaderNodeEmission')
+  emit.inputs['Strength'].default_value=.9
+  t=n.new('ShaderNodeTexImage')
+  t.image=bpy.data.images.load(photo,check_existing=True)
+  m.node_tree.links.new(t.outputs['Color'],emit.inputs['Color'])
+  m.node_tree.links.new(emit.outputs['Emission'],out.inputs['Surface'])
+  backdrop.data.materials.append(m)
+  print('QA REFERENCE PHOTO INCLUDED',photo)
+ except Exception as err:
+  print('QA exterior photo fallback',repr(err))
+
 # Render a quick real Cycles review frame from the same door-facing camera.
 # This is used for visual QA and has no impact on browser runtime.
 scene.render.engine='CYCLES'
