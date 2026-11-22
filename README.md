@@ -47,3 +47,14 @@ Connect this repository to Vercel; framework: Vite; build command: \`npm run bui
 - Other architecture and the surface texture maps were created for this site.
 
 This is a free hosted real-time architectural scene, not yet a perfect photogrammetric recreation of the source photo.
+
+## Photographic experience (November 2026)
+
+The website now separates two physically different experiences:
+
+1. **Photographic** (default): shows the user's Paris apartment reference photograph with restrained parallax and clickable portfolio objects. This is the **photorealistic view** but has a deliberately small camera movement envelope because a single perspective photo does not contain unseen geometry.
+2. **Free Walk · 3D:** loads the original Blender/React Three Fiber model with full WASD movement, collision and mouse-look. That mode is not represented as photorealistic.
+
+The photograph currently links to https://majorkeys.fr/assets/apartment-paris-3-C2GmvGUe.jpg, an external source matching the picture provided as the design reference. **Before relying on it for a permanent public site, obtain reuse permission or replace it with imagery you own or are licensed to publish.** The credited source can change or disable hotlinking; the photo view will report an error if loading fails.
+
+This dual-mode approach preserves realism for the entrance shot and genuine movement for the walkthrough without pretending a single photograph reconstructs an unseen 360° space. To achieve genuine photographic WASD movement throughout the room, capture many overlapping viewpoints (video/photogrammetry) and reconstruct with Gaussian splats or high-fidelity meshes, or use a high-quality purchased/licensed interior asset with physically accurate lighting.
