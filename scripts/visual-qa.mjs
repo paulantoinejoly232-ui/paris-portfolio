@@ -5,7 +5,7 @@ const browser = await chromium.launch({
  headless:true,
  args:['--enable-unsafe-swiftshader','--use-gl=angle','--use-angle=swiftshader','--ignore-gpu-blocklist']
 });
-const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
+const page=await browser.newPage({viewport:{width:1100,height:680},deviceScaleFactor:1});
 const issues=[];
 page.on('console',m=>{if(m.type()==='error')issues.push('console: '+m.text())});
 page.on('pageerror',e=>issues.push('js: '+e.stack));
@@ -18,7 +18,7 @@ try{
 }
 await page.locator('.enter').click({timeout:30000});
 await page.waitForTimeout(2200);
-await page.screenshot({path:'visual-qa/apartment-browser.png',fullPage:false});
+await page.screenshot({path:'visual-qa/apartment-browser.png',fullPage:false,timeout:90000,animations:'disabled'});
 const sizes=await page.evaluate(()=>({width:innerWidth,height:innerHeight,canvas:!!document.querySelector('canvas'),loaded:window.__APARTMENT_GLB_READY===true,nav:document.querySelectorAll('nav button').length}));
 console.log('PLAYWRIGHT VIEW',JSON.stringify(sizes));
 console.log('PLAYWRIGHT BROWSER ERRORS',JSON.stringify(issues.slice(0,15)));

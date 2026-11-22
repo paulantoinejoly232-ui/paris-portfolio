@@ -547,6 +547,25 @@ def wrought_scroll(name,cx,cy,height=.50,turns=1.15):
 for j in range(23):
  wrought_scroll('balcony artisan spiral',-6.55+j*.39,.53)
 
+
+# Collapse static architectural microgeometry into a few batched meshes.
+# This preserves the relief while dramatically reducing browser draw calls.
+def batch_details(label,prefixes):
+ objects=[o for o in list(opaque) if o.type=='MESH' and any(o.name.startswith(prefix) for prefix in prefixes)]
+ if len(objects)<2:return
+ bpy.ops.object.select_all(action='DESELECT')
+ for o in objects:o.select_set(True)
+ bpy.context.view_layer.objects.active=objects[0]
+ bpy.ops.object.join()
+ merged=bpy.context.object
+ merged.name=label
+ for o in objects:
+  if o in opaque:opaque.remove(o)
+ opaque.append(merged)
+ print('BATCHED',label,'part_count',len(objects))
+batch_details('Balcony wrought iron artisan railing',['balcony artisan spiral','wrought iron vertical','balcony continuous rail','iron rosette'])
+batch_details('Intricate plaster cornice beads',['hand-finished cornice bead','hand-finished side cornice bead'])
+
 # A beautiful warm-bounce lighting rig optimized for a fixed residential time of day.
 daylight=light('golden-hour sun','SUN',P(-28,25,-34),(1,.76,.54),3.2)
 # Blender Sun location alone does not control direction: aim it through glass.
