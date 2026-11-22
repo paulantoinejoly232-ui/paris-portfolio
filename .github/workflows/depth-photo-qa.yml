@@ -1,0 +1,42 @@
+name: Depth photograph — browser movement QA
+on:
+  push:
+    branches: [feature/depth-photo-walk]
+    paths:
+      - public/assets/photo-apartment-depth.png
+      - src/PhotoTour.jsx
+      - scripts/depth-photo-qa.mjs
+      - .github/workflows/depth-photo-qa.yml
+  workflow_dispatch:
+concurrency:
+  group: photograph-visual-qa-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  movement:
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.56.1-noble
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install app and browser test
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save playwright@1.56.1 --no-audit --no-fund
+      - name: Capture starting and stepped-into perspective
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/vite.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:5173/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/depth-photo-qa.mjs
+      - name: Upload verified photo perspective shots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: photographed-room-depth-perspective
+          path: visual-qa/*.png
+          retention-days: 5

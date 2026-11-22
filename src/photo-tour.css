@@ -32,3 +32,21 @@
 @keyframes photo-warmth{from{opacity:.46}to{opacity:.82}}
 @media(max-width:750px){.experience-switch{top:78px;right:16px}.experience-switch button{font-size:9px;padding:9px 12px}.mode-explanation{top:127px;right:16px;font-size:9px}.photo-guide{bottom:72px;gap:7px;font-size:8px;padding:8px 10px;letter-spacing:.04em}.photo-guide-k{font-size:9px}.photo-attribution{right:12px;bottom:11px;max-width:210px;text-align:right;font-size:8px}.photo-experience .locator{bottom:127px}.photo-marker .marker-ring{width:27px;height:27px;box-shadow:0 0 0 4px rgba(255,244,227,.13)}.photo-marker{gap:5px}.marker-label{padding:7px 10px}.marker-label strong{font-size:10px}.marker-label small{font-size:8px}.photo-stage{width:max(100vw,100vh);height:max(100vw,100vh)}}
 @media(prefers-reduced-motion:reduce){.photo-amber-glow{animation:none}.photo-stage{transition:none}}
+
+/* Reconstructed photograph: perspective motion through a textured depth surface. */
+.photo-depth-tour{touch-action:none;background:#261810}
+.photo-depth-background{position:absolute;inset:-4%;background-position:center;background-repeat:no-repeat;background-size:cover;filter:blur(26px) saturate(.8) brightness(.65)}
+.photo-depth-canvas{position:absolute!important;inset:0;touch-action:none}
+.photo-depth-static{position:absolute;width:100%;height:100%;object-fit:cover}
+.photo-depth-tour .photo-bottom-fade{z-index:2;pointer-events:none}
+.photo-depth-marker{border:0;display:flex;align-items:center;gap:10px;cursor:pointer;background:transparent;color:#fff;white-space:nowrap;padding:8px;filter:drop-shadow(0 2px 5px #000a)}
+.photo-depth-dot{display:grid;place-items:center;width:27px;height:27px;border:1px solid #fffc;background:#33221c88;backdrop-filter:blur(8px);border-radius:50%;font-size:17px;transition:transform .2s,background .2s}
+.photo-depth-label{display:block;background:#201911dd;padding:7px 11px;border:1px solid #f9e0c858;border-radius:3px;opacity:0;transition:opacity .2s;font-size:11px}
+.photo-depth-marker:hover .photo-depth-label,.photo-depth-marker:focus-visible .photo-depth-label{opacity:1}
+.photo-depth-marker:hover .photo-depth-dot,.photo-depth-marker:focus-visible .photo-depth-dot{transform:scale(1.13);background:#91673cbf}
+.photo-depth-hud{position:absolute;z-index:5;left:50%;bottom:35px;transform:translateX(-50%);display:flex;gap:17px;align-items:center;white-space:nowrap;font-size:10px;letter-spacing:.11em;text-shadow:0 2px 8px #0009;padding:11px 17px;border:1px solid #ffffff5c;border-radius:50px;background:#1c1511a6;backdrop-filter:blur(12px)}
+.photo-depth-hud strong{color:#ffddad}.photo-hud-distance{color:#ffc891}
+.photo-depth-pad{position:absolute;bottom:85px;left:20px;display:grid;z-index:6;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px);gap:5px;touch-action:none}
+.photo-depth-pad button{touch-action:none;border-radius:8px;border:1px solid #ffffff89;background:#1e1714bd;color:white;font-size:19px}
+.photo-depth-pad .f{grid-column:2;grid-row:1}.photo-depth-pad .l{grid-column:1;grid-row:2}.photo-depth-pad .b{grid-column:2;grid-row:2}.photo-depth-pad .r{grid-column:3;grid-row:2}
+@media(max-width:750px){.photo-depth-hud{font-size:8px;bottom:70px;gap:8px;letter-spacing:0;padding:8px 11px}.photo-hud-distance{display:none}}

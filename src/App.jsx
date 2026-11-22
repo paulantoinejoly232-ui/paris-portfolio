@@ -164,19 +164,19 @@ export default function App(){
     </nav>
    </header>
    {!siteMode&&<div className="experience-switch" role="group" aria-label="Choose your apartment experience">
-      <button className={photoMode?'is-current':''} aria-pressed={photoMode} onClick={()=>changeExperience(true)}>Photographic</button>
+      <button className={photoMode?'is-current':''} aria-pressed={photoMode} onClick={()=>changeExperience(true)}>3D Photograph</button>
       <button className={!photoMode?'is-current':''} aria-pressed={!photoMode} onClick={()=>changeExperience(false)}>Free Walk · 3D</button>
     </div>}
-   {!siteMode&&<div className="mode-explanation">{photoMode?'Real photograph · limited camera movement':'3D reconstruction · unrestricted WASD'}</div>}
+   {!siteMode&&<div className="mode-explanation">{photoMode?'Depth-reconstructed photograph · spatial movement':'3D reconstruction · unrestricted WASD'}</div>}
    {!siteMode&&<div className="locator">PARIS, FRANCE <span className="dot"/> GOLDEN HOUR</div>}
    {!loaded&&!siteMode&&<div className="loader"><div className="loader-monogram">PJ</div><p>PREPARING THE APARTMENT</p></div>}
    {!active&&!siteMode&&<section className="welcome" aria-label="Enter the apartment">
     <div className="welcome-shade"/>
     <div className="welcome-content"><span className="eyebrow">AN INVITATION · PARIS</span>
      <h1>Step inside<br/><em>my world.</em></h1>
-     <p>{photoMode?'Begin inside the Paris apartment itself. Move gently through the photographic view, discover objects, and step into Free Walk whenever you want to explore the whole room.':'Explore a fully three-dimensional apartment and uncover the experiences behind my story.'}</p>
-     <button className="enter" disabled={!loaded} onClick={enter}>{loaded?(photoMode?'ENTER THE PHOTOGRAPH':'ENTER FREE WALK'):'LOADING THE SPACE'} <span>↗</span></button>
-     <span className="intro-tip">{photoMode?'WASD FOR SMALL CAMERA MOVEMENTS · CLICK THE OBJECTS':'WASD TO WALK · MOVE THE MOUSE TO LOOK'}</span>
+     <p>{photoMode?'Enter a depth-reconstructed version of the Paris photograph. Walk forward with WASD, look around, and discover interactive objects. Single-image reconstruction has a limited movement range.':'Explore a fully three-dimensional apartment and uncover the experiences behind my story.'}</p>
+     <button className="enter" disabled={!loaded} onClick={enter}>{loaded?(photoMode?'ENTER THE 3D PHOTOGRAPH':'ENTER FREE WALK'):'LOADING THE SPACE'} <span>↗</span></button>
+     <span className="intro-tip">{photoMode?'WASD TO MOVE THROUGH THE IMAGE · MOUSE TO LOOK · E TO EXPLORE':'WASD TO WALK · MOVE THE MOUSE TO LOOK'}</span>
     </div>
    </section>}
    {active&&!siteMode&&!page&&!photoMode&&<div className="hint">
