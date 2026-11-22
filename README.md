@@ -38,3 +38,12 @@ Core room geometry and its textures are originally generated. The Paris view is 
 
 ## Deployment
 Connect this repository to Vercel; framework: Vite; build command: \`npm run build\`; output: \`dist\`.
+
+
+## Scene asset provenance (free to use)
+- Detailed modern armchair, dining chairs and potted plant: [Poly Haven](https://polyhaven.com/), CC0.
+- Contemporary three-seat sofa: [3DAssets.dev](https://3dassets.dev/assets/bedroom-and-living-room-furniture-sofa-three-seat-6be9b44b), CC0.
+- Paris exterior photograph: [Unsplash](https://unsplash.com/), under the Unsplash License. Cached locally for reliability; the image is a background plate, not part of the navigable geometry.
+- Other architecture and the surface texture maps were created for this site.
+
+This is a free hosted real-time architectural scene, not yet a perfect photogrammetric recreation of the source photo.
