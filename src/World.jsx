@@ -146,7 +146,7 @@ function Exterior({m}){
  useEffect(()=>{
  const loader=new THREE.TextureLoader();
  loader.setCrossOrigin('anonymous');
- loader.load('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1800&q=85',t=>{
+ loader.load('/assets/paris-eiffel.jpg',t=>{
   t.colorSpace=THREE.SRGBColorSpace;setPhoto(t)
  },undefined,()=>{});
  },[]);
