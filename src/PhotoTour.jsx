@@ -3,7 +3,7 @@ import './photo-tour.css';
 
 // This is the actual photographic reference, not a generated mesh or CGI.
 // Images require appropriate reuse rights before a permanent public launch.
-const SOURCE='https://majorkeys.fr/assets/apartment-paris-3-C2GmvGUe.jpg';
+const SOURCE='/assets/photo-apartment-reference.jpg';
 const MARKERS=[
   {id:'story',x:26,y:72,label:'My story',caption:'The books and the journey'},
   {id:'projects',x:12,y:49,label:'Projects & ideas',caption:'Where curiosity leads'},
