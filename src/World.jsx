@@ -388,6 +388,6 @@ export default function World({onInteract,onReady}){
  {/* The Blender-generated GLB supersedes code geometry once committed. */}
  {!customLoaded&&<group><Architecture m={m}/><Living m={m} onInteract={onInteract}/><Kitchen m={m} onInteract={onInteract}/><Props m={m} onInteract={onInteract}/><Lamps m={m}/></group>}
  <ModelOverride onLoad={setCustomLoaded}/>
- <ContactShadows position={[0,-.005,0]} opacity={.24} scale={16} blur={2.6} far={5} frames={1} resolution={512} color="#5d3a24"/>
+ {customLoaded&&<ContactShadows position={[0,-.005,0]} opacity={.24} scale={16} blur={2.6} far={5} frames={1} resolution={512} color="#5d3a24"/>}
  </group>;
 }
