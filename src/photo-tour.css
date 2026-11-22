@@ -1,0 +1,34 @@
+.photo-tour{position:absolute;inset:0;overflow:hidden;background:#30231b;touch-action:pan-x pan-y}
+.photo-stage{position:absolute;left:50%;top:50%;width:max(100vw,100vh);height:max(100vw,100vh);transform:translate(-50%,-50%) translate3d(var(--drift-x,0px),var(--drift-y,0px),0) scale(var(--drift-scale,1.055));transform-origin:50% 50%;will-change:transform;backface-visibility:hidden}
+.photo-stage>img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none;filter:saturate(1.03) contrast(1.02)}
+.photo-amber-glow{pointer-events:none;position:absolute;inset:0;background:radial-gradient(ellipse 38% 32% at 44% 50%,rgba(255,198,112,.14),transparent 75%);mix-blend-mode:screen;animation:photo-warmth 9s ease-in-out infinite alternate}
+.photo-light-haze{pointer-events:none;position:absolute;inset:0;background:linear-gradient(100deg,transparent 15%,rgba(255,235,185,.022) 40%,transparent 65%);opacity:.65}
+.photo-bottom-fade{pointer-events:none;position:absolute;inset:0;background:linear-gradient(0deg,rgba(21,15,10,.36),transparent 21%),linear-gradient(90deg,rgba(20,13,8,.24),transparent 22%,transparent 80%,rgba(20,13,8,.13))}
+.photo-marker{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:12px;background:transparent;border:0;color:#fff8ef;padding:12px;white-space:nowrap;text-align:left;cursor:pointer;filter:drop-shadow(0 3px 6px #140b07ba)}
+.marker-ring{display:grid;place-items:center;flex-shrink:0;width:37px;height:37px;border:1px solid rgba(255,248,230,.86);border-radius:50%;background:rgba(51,35,24,.22);box-shadow:0 0 0 7px rgba(255,244,227,.12);backdrop-filter:blur(5px);transition:transform .24s,background .24s}
+.marker-core{background:#fff9ed;width:6px;height:6px;border-radius:50%;box-shadow:0 0 12px #fff0d5}
+.photo-marker:hover .marker-ring,.photo-marker:focus-visible .marker-ring,.photo-marker.focused .marker-ring{transform:scale(1.13);background:rgba(129,78,39,.63)}
+.marker-label{display:flex;flex-direction:column;align-items:flex-start;padding:10px 14px;border:1px solid rgba(255,255,255,.28);border-radius:4px;background:rgba(24,17,14,.53);backdrop-filter:blur(16px);opacity:0;transform:translateX(-6px);transition:opacity .2s,transform .2s;pointer-events:none}
+.marker-label strong{font-size:12px;font-weight:500;letter-spacing:.04em}
+.marker-label small{margin-top:4px;font-size:9px;color:#ffead6ad;letter-spacing:.07em}
+.photo-marker:hover .marker-label,.photo-marker:focus-visible .marker-label,.photo-marker.focused .marker-label{opacity:1;transform:translateX(0)}
+.photo-guide{position:absolute;bottom:38px;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:99px;background:rgba(26,20,16,.48);border:1px solid #ffecda40;backdrop-filter:blur(15px);white-space:nowrap;font-size:10px;letter-spacing:.12em;color:#ffefdd}
+.photo-guide-k{font-weight:700;letter-spacing:.2em;font-size:11px}.photo-guide-divider{color:#efd7be99}
+.photo-attribution{position:absolute;right:28px;bottom:14px;z-index:6;font-size:9px;color:#fff0ddc0;letter-spacing:.02em;text-shadow:0 1px 4px #0008}
+.photo-attribution a{color:inherit;text-decoration:none;border-bottom:1px dotted #fff9}
+.photo-failure{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:400px;padding:25px;background:#211711ee;border:1px solid #fff6;z-index:3;text-align:center;line-height:1.6;font-size:14px}
+.photo-touch-area{position:absolute;inset:0;pointer-events:none}
+.photo-experience .cinematic-shade{opacity:.25}
+.photo-experience .locator{bottom:98px}
+.photo-experience .welcome-shade{background:linear-gradient(90deg,rgba(26,17,12,.82),rgba(26,17,12,.53) 42%,rgba(26,17,12,.07) 85%)}
+.photo-experience .welcome h1{letter-spacing:-.057em}
+.photo-experience .welcome-content{max-width:720px}
+.experience-switch{position:fixed;z-index:22;right:clamp(18px,4.2vw,64px);top:100px;background:rgba(28,19,15,.56);border:1px solid rgba(255,239,214,.37);border-radius:50px;backdrop-filter:blur(18px);display:flex;padding:5px;box-shadow:0 7px 24px #170e0988;gap:3px}
+.experience-switch button{background:none;border:0;border-radius:50px;padding:11px 16px;color:#f8e4d2b8;font-size:10px;letter-spacing:.12em;text-transform:uppercase;transition:background .2s,color .2s}
+.experience-switch button.is-current{background:#f0d0a9;color:#241810;font-weight:700}
+.experience-switch button:not(.is-current):hover{color:#fff}
+.mode-explanation{position:fixed;top:154px;right:clamp(18px,4.2vw,64px);z-index:19;font-size:10px;letter-spacing:.06em;color:#fff2dfc7;text-shadow:0 2px 9px #180e0a;pointer-events:none}
+.photo-experience .toggle-site{bottom:23px}
+@keyframes photo-warmth{from{opacity:.46}to{opacity:.82}}
+@media(max-width:750px){.experience-switch{top:78px;right:16px}.experience-switch button{font-size:9px;padding:9px 12px}.mode-explanation{top:127px;right:16px;font-size:9px}.photo-guide{bottom:72px;gap:7px;font-size:8px;padding:8px 10px;letter-spacing:.04em}.photo-guide-k{font-size:9px}.photo-attribution{right:12px;bottom:11px;max-width:210px;text-align:right;font-size:8px}.photo-experience .locator{bottom:127px}.photo-marker .marker-ring{width:27px;height:27px;box-shadow:0 0 0 4px rgba(255,244,227,.13)}.photo-marker{gap:5px}.marker-label{padding:7px 10px}.marker-label strong{font-size:10px}.marker-label small{font-size:8px}.photo-touch-area{pointer-events:auto;z-index:2}.photo-stage{width:max(100vw,100vh);height:max(100vw,100vh)}}
+@media(prefers-reduced-motion:reduce){.photo-amber-glow{animation:none}.photo-stage{transition:none}}
