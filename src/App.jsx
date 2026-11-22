@@ -90,7 +90,7 @@ function Scene({active,blockedByPanel,held,onNearby,onOpen,onReady,mobile}){
  return <Canvas id="canvas" aria-label="Walk around a 3D Parisian apartment"
    shadows gl={{antialias:true,alpha:false,powerPreference:'high-performance'}} dpr={[1,Math.min(devicePixelRatio,mobile?1.25:1.8)]}
    camera={{fov:66,near:.05,far:650,position:[0,1.71,5.1]}}
-   onCreated={({gl})=>{gl.outputColorSpace=THREE.SRGBColorSpace;gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.30}}>
+   onCreated={({gl})=>{gl.outputColorSpace=THREE.SRGBColorSpace;gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.16}}>
    <World onInteract={onOpen} onReady={onceReady}/>
    <Controls active={active} blockedByPanel={blockedByPanel} held={held} onNearby={onNearby} mobile={mobile}/>
  </Canvas>;

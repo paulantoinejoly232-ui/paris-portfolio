@@ -326,12 +326,12 @@ export default function World({onInteract,onReady}){
  <color attach="background" args={['#b49c84']}/>
  <fog attach="fog" args={['#d7a584',55,180]}/>
  <Sky distance={450000} sunPosition={[-80,9,-190]} turbidity={8} rayleigh={.3} mieCoefficient={.009} mieDirectionalG={.85}/>
- <hemisphereLight args={['#ffe2c1','#6e6152',2.15]}/>
- <ambientLight intensity={.45} color="#ffe0bb"/>
- <directionalLight position={[-29,23,-30]} color="#ffbb7d" intensity={3.8} castShadow shadow-mapSize={[2048,2048]} shadow-normalBias={.035}
+ <hemisphereLight args={['#ffe0c1','#544635',1.22]}/>
+ <ambientLight intensity={.18} color="#ffe9d6"/>
+ <directionalLight position={[-29,23,-30]} color="#ffbb7d" intensity={3.2} castShadow shadow-mapSize={[2048,2048]} shadow-normalBias={.035}
  shadow-camera-near={.5} shadow-camera-far={95} shadow-camera-left={-24} shadow-camera-right={24} shadow-camera-top={24} shadow-camera-bottom={-24}/>
- <pointLight position={[-5,2.7,-5]} color="#ffd3a5" intensity={2.0} distance={12}/>
- <pointLight position={[3.2,3,1]} color="#ffe6c5" intensity={1.2} distance={9}/>
+ <pointLight position={[-5,2.7,-5]} color="#ffd3a5" intensity={1.0} distance={11}/>
+ <pointLight position={[3.2,3,1]} color="#ffe6c5" intensity={.75} distance={9}/>
  <Exterior m={m}/>
  {/* The Blender-generated GLB supersedes code geometry once committed. */}
  {!customLoaded&&<group><Architecture m={m}/><Living m={m} onInteract={onInteract}/><Kitchen m={m} onInteract={onInteract}/><Props m={m} onInteract={onInteract}/><Lamps m={m}/></group>}
